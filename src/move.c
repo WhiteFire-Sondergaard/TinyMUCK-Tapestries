@@ -370,8 +370,9 @@ trigger(dbref player, dbref exit, int pflag)
 			notify(player, "You can't go that way.");
 			break;
 		    } */
-		    if (!(FLAGS(exit)&ZONE) 
-			&& what_zone(exit) != what_zone(dest))
+		    if (!(FLAGS(exit)&ZONE) &&
+			Typeof(getloc(exit)) != TYPE_PLAYER &&
+			what_zone(exit) != what_zone(dest))
 	            {
 			notify(player, "You can't go that way. (Exit lacks zone flag).");
 			break;
