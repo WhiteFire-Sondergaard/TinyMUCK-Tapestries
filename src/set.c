@@ -134,7 +134,6 @@ void
 do_name(dbref player, const char *name, char *newname)
 {
     dbref   thing;
-    char   *password;
 
     if ((thing = match_controlled(player, name)) != NOTHING) {
 	/* check for bad name */

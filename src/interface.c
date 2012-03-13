@@ -1096,7 +1096,7 @@ new_connection(int sock, int port)
 {
     int     newsock;
     struct sockaddr_in addr;
-    int     addr_len;
+    size_t     addr_len;
     char    hostname[128];
     int	    optval;
 

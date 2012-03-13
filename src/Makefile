@@ -36,7 +36,7 @@ ROOT= ..
 INCLUDE= ${ROOT}/include
 
 # Destination for binaries
-DEST=${ROOT}/game
+DEST=${ROOT}/bin
 
 # #######################################################################
 # 		Variables set by the configure script.
