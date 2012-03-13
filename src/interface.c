@@ -116,6 +116,7 @@
 #include <ctype.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 
 #include "db.h"
@@ -1097,12 +1098,23 @@ new_connection(int sock, int port)
     struct sockaddr_in addr;
     int     addr_len;
     char    hostname[128];
+    int	    optval;
 
     addr_len = sizeof(addr);
     newsock = accept(sock, (struct sockaddr *) & addr, &addr_len);
     if (newsock < 0) {
 	return 0;
     } else {
+	optval = 1; /* TCP KEEPALIVE ON */
+	if(setsockopt(newsock, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0)
+	{
+            perror("setsockopt()->SO_KEEPALIVE");
+	}
+	optval = 60 * 5; /* TCP KEEPALIVE IDLE TIME (5 minutes) */
+	if(setsockopt(newsock, SOL_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) < 0)
+	{
+            perror("setsockopt()->TCP_KEEPIDLE");
+	}
 	strcpy(hostname, addrout(addr.sin_addr.s_addr, addr.sin_port, port));
 	log_status("ACCEPT: %s(%d) on descriptor %d\n", hostname,
 		    ntohs(addr.sin_port), newsock);
