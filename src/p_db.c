@@ -994,6 +994,7 @@ prim_setlink(PRIM_PROTOTYPE)
 		}
 		if (MLevRaw(ref))
 		    SetMLevel(ref, 0);
+		FLAGS(ref) &= ~ZONE; // Remove zone flag on Unlink
 		break;
 	    case TYPE_ROOM:
 		DBSTORE(ref, sp.room.dropto, NOTHING);

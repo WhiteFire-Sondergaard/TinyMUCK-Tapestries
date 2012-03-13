@@ -250,19 +250,22 @@ pronoun_substitute(dbref player, const char *str)
 		mywhere = player;
 		d = (isupper(c)) ? c : toupper(c);
 
-		if (d == 'A' || d == 'S' || d == 'O' ||
-			d == 'P' || d == 'R' /* || d == 'N' */) {
+		if (d != 'N' && d != 'n')
+		{
+                    if (d == 'A' || d == 'S' || d == 'O' ||
+                        d == 'P' || d == 'R') {
 #ifdef COMPRESS
-		    self_sub = uncompress(get_property_class(mywhere, prn));
+                        self_sub = uncompress(get_property_class(mywhere, prn));
 #else
-		    self_sub = get_property_class(mywhere, prn);
+                        self_sub = get_property_class(mywhere, prn);
 #endif
-		} else {
+                    } else {
 #ifdef COMPRESS
-		    self_sub = uncompress(envpropstr(&mywhere, prn));
+                        self_sub = uncompress(envpropstr(&mywhere, prn));
 #else
-		    self_sub = envpropstr(&mywhere, prn);
+                        self_sub = envpropstr(&mywhere, prn);
 #endif
+                    }
 		}
 
 		if (self_sub) {

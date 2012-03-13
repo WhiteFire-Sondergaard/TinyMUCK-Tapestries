@@ -34,6 +34,7 @@ int isneighbor(dbref d1, dbref d2);
 dbref mesg_dbref_raw(dbref player, dbref what, dbref perms, const char *buf);
 dbref mesg_dbref_read(dbref player, dbref what, dbref perms, char *buf);
 dbref mesg_dbref_write(dbref player, dbref what, dbref perms, char *buf);
+int mesg_proximity_perms(dbref player, dbref perms, dbref obj);
 dbref mesg_dbref_proximity(dbref player, dbref what, dbref perms, char *buf);
 dbref mesg_dbref_exec(dbref player, dbref what, dbref perms, char *buf);
 

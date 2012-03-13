@@ -530,7 +530,7 @@ isneighbor(dbref d1, dbref d2)
 
 
 int
-mesg_local_perms(dbref player, dbref perms, dbref obj)
+mesg_proximity_perms(dbref player, dbref perms, dbref obj)
 {
 
     if (obj == player) return 1;
@@ -623,7 +623,7 @@ mesg_dbref_proximity(dbref player, dbref what, dbref perms, char *buf)
     dbref obj = mesg_dbref_raw(player, what, perms, buf);
 
     if (obj == UNKNOWN) return obj;
-    if (!mesg_local_perms(player, perms, obj)) {
+    if (!mesg_proximity_perms(player, perms, obj)) {
         obj = PERMDENIED;
     }
     return obj;

@@ -302,12 +302,11 @@ const char *
 mfn_name(MFUNARGS)
 {
     char *ptr;
-    dbref obj = mesg_dbref_proximity(player, what, perms, argv[0]);
+    // dbref obj = mesg_dbref_proximity(player, what, perms, argv[0]);
+    dbref obj = mesg_dbref_raw(player, what, perms, argv[0]);
 
     if (obj == UNKNOWN)
         ABORT_MPI("NAME","Match failed.");
-    if (obj == PERMDENIED)
-        ABORT_MPI("NAME","Permission denied.");
     if (obj == NOTHING) {
         strcpy(buf, "#NOTHING#");
 	return buf;
@@ -320,6 +319,9 @@ mfn_name(MFUNARGS)
         strcpy(buf, "#HOME#");
 	return buf;
     }
+    if (!(Typeof(obj) == TYPE_PLAYER) &&
+        !mesg_proximity_perms(player, perms, obj))
+        ABORT_MPI("NAME","Permission denied.");
     strcpy(buf, RNAME(obj));
     if (Typeof(obj) == TYPE_EXIT) {
         ptr = index(buf, ';');
@@ -1128,7 +1130,7 @@ mfn_awake(MFUNARGS)
 const char *
 mfn_type(MFUNARGS)
 {
-    dbref obj = mesg_dbref_proximity(player, what, perms, argv[0]);
+    dbref obj = mesg_dbref_raw(player, what, perms, argv[0]);
 
     if (obj == NOTHING || obj == AMBIGUOUS || obj == UNKNOWN)
         return("Bad");
@@ -1163,7 +1165,7 @@ mfn_type(MFUNARGS)
 const char *
 mfn_istype(MFUNARGS)
 {
-    dbref obj = mesg_dbref_proximity(player, what, perms, argv[0]);
+    dbref obj = mesg_dbref_raw(player, what, perms, argv[0]);
 
     if (obj == NOTHING || obj == AMBIGUOUS || obj == UNKNOWN)
         return(string_compare(argv[1], "Bad") ? "0" : "1");

@@ -738,6 +738,7 @@ do_unlink(dbref player, const char *name)
 			    SetMLevel(exit, 0);
 			    notify(player, "Action priority Level reset to 0.");
 			}
+			FLAGS(exit) &= ~ZONE; // Remove zone flag on Unlink
 			break;
 		    case TYPE_ROOM:
 			ts_modifyobject(exit);
