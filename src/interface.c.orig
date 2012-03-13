@@ -119,8 +119,6 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 
-#include<openssl/ssl.h>
-
 #include "db.h"
 #include "interface.h"
 #include "params.h"
@@ -156,7 +154,6 @@ struct text_queue {
 
 struct descriptor_data {
     int     descriptor;
-       SSL             *ssl;
     int     connected;
     int     booted;
     dbref   player;
@@ -176,15 +173,8 @@ struct descriptor_data {
     struct descriptor_data **prev;
 }      *descriptor_list = 0;
 
-struct socks {
-       int     s;
-       int is_ssl;
-} sock[MAX_LISTEN_PORTS];
-
-SSL_CTX *ctx;
-
 static int numsocks = 0;
-/* static int sock[MAX_LISTEN_PORTS]; */
+static int sock[MAX_LISTEN_PORTS];
 static int ndescriptors = 0;
 extern void fork_and_dump();
 
@@ -197,7 +187,7 @@ extern int rwhocli_userlogout(const char *uid);
 void    process_commands(void);
 void    shovechars(int portc, int* portv);
 static void    shutdownsock(struct descriptor_data * d);
-static struct descriptor_data *initializesock(int s, const char *hostname, SSL *ssl);
+static struct descriptor_data *initializesock(int s, const char *hostname);
 void    make_nonblocking(int s);
 static void    freeqs(struct descriptor_data * d);
 static void    welcome_user(struct descriptor_data * d);
@@ -207,7 +197,7 @@ int     boot_off(dbref player);
 void    boot_player_off(dbref player);
 const char *addrout(long, unsigned short, unsigned short);
 static void    dump_users(struct descriptor_data * d, char *user);
-static struct descriptor_data *new_connection(int sock, int port, int is_ssl);
+static struct descriptor_data *new_connection(int sock, int port);
 void    parse_connect(const char *msg, char *command, char *user, char *pass);
 void    set_userstring(char **userstring, const char *command);
 static int     do_command(struct descriptor_data * d, char *command);
@@ -234,8 +224,6 @@ int     online(dbref player);
 int     online_init();
 dbref   online_next(int *ptr);
 long 	max_open_files(void);
-
-
 
 #ifdef SPAWN_HOST_RESOLVER
 void kill_resolver();
@@ -283,6 +271,7 @@ show_program_usage(char *prog)
     exit(1);
 }
 
+
 extern int sanity_violated;
 
 int 
@@ -296,7 +285,6 @@ main(int argc, char **argv)
     int sanity_interactive;
     int sanity_autofix;
     int portcount = 0;
-       int ssl_init = 0;
     int whatport[MAX_LISTEN_PORTS];
 
 #ifdef DETACH
@@ -345,22 +333,15 @@ main(int argc, char **argv)
 	        outfile_name = argv[i];
 	        break;
 	      default:
-                if (argv[i][0] == 's') {
-                        ssl_init = 1;
-                        sock[portcount].is_ssl = 1;
-                        whatport[portcount] = atoi(argv[i]+1);
-                } else {
-                        sock[portcount].is_ssl = 0;
-                        whatport[portcount] = atoi(argv[i]);
-                }
-                if (portcount>= MAX_LISTEN_PORTS) {
-                        show_program_usage(*argv);
-                }
-                if (whatport[portcount]<  1 || whatport[portcount]>  65535) {
-                        show_program_usage(*argv);
-                }
-                portcount++;
-                break;
+		whatport[portcount] = atoi(argv[i]);
+		if (portcount >= MAX_LISTEN_PORTS) {
+		    show_program_usage(*argv);
+		}
+		if (whatport[portcount] < 1 || whatport[portcount] > 65535) {
+		    show_program_usage(*argv);
+		}
+		portcount++;
+		break;
 	    }
 	}
     }
@@ -455,23 +436,6 @@ main(int argc, char **argv)
 	    }
 	}
 
-       if(ssl_init) {
-               SSL_library_init();
-               ctx = SSL_CTX_new(SSLv23_method());
-               if(!SSL_CTX_use_certificate_chain_file(ctx, SSL_KEY_FILE)) {
-                       fprintf(stderr, "Couldn't load %s!\n", SSL_KEY_FILE);
-                       exit(2);
-               }
-               if(!SSL_CTX_use_PrivateKey_file(ctx, SSL_KEY_FILE, SSL_FILETYPE_PEM)) {
-                       fprintf(stderr, "Couldn't load %s!\n", SSL_KEY_FILE);
-                       exit(2);
-               }
-               if(!SSL_CTX_load_verify_locations(ctx, NULL, SSL_CA_DIR)) {
-                       fprintf(stderr, "Couldn't load CA from %s!\n", SSL_CA_DIR);
-                       exit(2);
-               }
-       }
-
 	/* go do it */
 	shovechars(portcount, whatport);
 
@@ -518,8 +482,6 @@ main(int argc, char **argv)
 #ifdef MALLOC_PROFILING
 	CrT_summarize_to_file("malloc_log", "Shutdown");
 #endif
-
-       SSL_CTX_free(ctx);
 
 	if (restart_flag) {
 	    char* argbuf[MAX_LISTEN_PORTS + 3];
@@ -851,43 +813,17 @@ long 	max_open_files(void)
 static void 
 goodbye_user(struct descriptor_data * d)
 {
-    BIO *io,*ssl_bio;
-
-    if(d->ssl) {
-            io=BIO_new(BIO_f_buffer());
-            ssl_bio=BIO_new(BIO_f_ssl());
-            BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-            BIO_push(io, ssl_bio);
-            BIO_write(io, "\r\n", 2);
-            BIO_write(io, tp_leave_mesg, strlen(tp_leave_mesg));
-            BIO_write(io, "\r\n\r\n", 4);
-    } else {
-        write(d->descriptor, "\r\n", 2);
-        write(d->descriptor, tp_leave_mesg, strlen(tp_leave_mesg));
-        write(d->descriptor, "\r\n\r\n", 4);
-    }
-
+    write(d->descriptor, "\r\n", 2);
+    write(d->descriptor, tp_leave_mesg, strlen(tp_leave_mesg));
+    write(d->descriptor, "\r\n\r\n", 4);
 }
 
 static void
 idleboot_user(struct descriptor_data * d)
 {
-    BIO *io,*ssl_bio;
-
-    if(d->ssl) {
-            io=BIO_new(BIO_f_buffer());
-            ssl_bio=BIO_new(BIO_f_ssl());
-            BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-            BIO_push(io, ssl_bio);
-            BIO_write(io, "\r\n", 2);
-            BIO_write(io, tp_idle_mesg, strlen(tp_idle_mesg));
-            BIO_write(io, "\r\n\r\n", 4);
-    } else {
-            write(d->descriptor, "\r\n", 2);
-            write(d->descriptor, tp_idle_mesg, strlen(tp_idle_mesg));
-            write(d->descriptor, "\r\n\r\n", 4);
-    }
-
+    write(d->descriptor, "\r\n", 2);
+    write(d->descriptor, tp_idle_mesg, strlen(tp_idle_mesg));
+    write(d->descriptor, "\r\n\r\n", 4);
     d->booted=1;
 }
 
@@ -914,8 +850,8 @@ shovechars(int portc, int* portv)
     int openfiles_max;
 
     for (socknum = 0; socknum < portc; socknum++) {
-	sock[socknum].s = make_socket(portv[socknum]);
-	maxd = sock[socknum].s + 1;
+	sock[socknum] = make_socket(portv[socknum]);
+	maxd = sock[socknum] + 1;
 	numsocks++;
     }
     gettimeofday(&last_slice, (struct timezone *) 0);
@@ -958,7 +894,7 @@ shovechars(int portc, int* portv)
 	FD_ZERO(&output_set);
 	if (ndescriptors < avail_descriptors) {
 	    for (socknum = 0; socknum < numsocks; socknum++) {
-		FD_SET(sock[socknum].s, &input_set);
+		FD_SET(sock[socknum], &input_set);
 	    }
 	}
 	for (d = descriptor_list; d; d = d->next) {
@@ -1003,9 +939,8 @@ shovechars(int portc, int* portv)
 	    sel_prof_idle_use++;
 	    (void) time(&now);
 	    for (socknum = 0; socknum < numsocks; socknum++) {
-		if (FD_ISSET(sock[socknum].s, &input_set)) {
-		    if (!(newd = new_connection(sock[socknum].s, portv[socknum],
-				sock[socknum].is_ssl))) {
+		if (FD_ISSET(sock[socknum], &input_set)) {
+		    if (!(newd = new_connection(sock[socknum], portv[socknum]))) {
 			if (errno
 				&& errno != EINTR
 				&& errno != EMFILE
@@ -1157,16 +1092,13 @@ wall_wizards(const char *msg)
 
 
 static struct descriptor_data *
-new_connection(int sock, int port, int is_ssl)
+new_connection(int sock, int port)
 {
     int     newsock;
     struct sockaddr_in addr;
     size_t     addr_len;
     char    hostname[128];
     int	    optval;
-
-    SSL             *ssl = NULL;
-    BIO             *sbio;
 
     addr_len = sizeof(addr);
     newsock = accept(sock, (struct sockaddr *) & addr, &addr_len);
@@ -1183,24 +1115,12 @@ new_connection(int sock, int port, int is_ssl)
 	{
             perror("setsockopt()->TCP_KEEPIDLE");
 	}
-
-        if (is_ssl) {
-                sbio = BIO_new_socket(newsock, BIO_NOCLOSE);
-                ssl = SSL_new(ctx);
-                SSL_set_bio(ssl, sbio, sbio);
-
-                if (SSL_accept(ssl)<=0) {
-                        close(newsock);
-                        return 0;
-                }
-        }
-
 	strcpy(hostname, addrout(addr.sin_addr.s_addr, addr.sin_port, port));
 	log_status("ACCEPT: %s(%d) on descriptor %d\n", hostname,
 		    ntohs(addr.sin_port), newsock);
 	log_status("CONCOUNT: There are now %d open connections.\n",
 		    ndescriptors);
-	return initializesock(newsock, hostname, ssl);
+	return initializesock(newsock, hostname);
     }
 }
 
@@ -1409,7 +1329,7 @@ shutdownsock(struct descriptor_data * d)
 }
 
 static struct descriptor_data *
-initializesock(int s, const char *hostname, SSL *ssl)
+initializesock(int s, const char *hostname)
 {
     struct descriptor_data *d;
     char buf[128], *ptr;
@@ -1417,7 +1337,6 @@ initializesock(int s, const char *hostname, SSL *ssl)
     ndescriptors++;
     MALLOC(d, struct descriptor_data, 1);
     d->descriptor = s;
-    d->ssl = ssl;
     d->connected = 0;
     d->booted = 0;
     d->connected_at = current_systime;
@@ -1568,7 +1487,6 @@ process_output(struct descriptor_data * d)
 {
     struct text_block **qp, *cur;
     int     cnt;
-    BIO     *io = NULL, *ssl_bio;
 
     /* drastic, but this may give us crash test data */
     if (!d || !d->descriptor) {
@@ -1579,25 +1497,9 @@ process_output(struct descriptor_data * d)
     if (d->output.lines == 0) {
         return 1;
     }
-
-    if (d->ssl) {
-            io=BIO_new(BIO_f_buffer());
-            ssl_bio=BIO_new(BIO_f_ssl());
-            BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-            BIO_push(io, ssl_bio);
-    }
     
-    for (qp = &d->output.head; (cur = *qp);)
-    {
-        if (d->ssl) {
-            cnt = BIO_write(io, cur->start, cur->nchars);
-            fprintf(stderr, "Write Returned: %d...\n", cnt);
-            BIO_flush(io);
-            fprintf(stderr, "Flushed Output");
-        }
-        else
-	    cnt = write(d->descriptor, cur->start, cur->nchars);
-
+    for (qp = &d->output.head; (cur = *qp);) {
+	cnt = write(d->descriptor, cur->start, cur->nchars);
 	if (cnt < 0) {
 	    if (errno == EWOULDBLOCK)
 		return 1;
@@ -1701,16 +1603,8 @@ process_input(struct descriptor_data * d)
 {
     char    buf[MAX_COMMAND_LEN * 2];
     int     got;
-    char    *p, *pend, *q, *qend;
-       BIO             *io, *ssl_bio;
+    char   *p, *pend, *q, *qend;
 
-       if(d->ssl) {
-               io=BIO_new(BIO_f_buffer());
-               ssl_bio=BIO_new(BIO_f_ssl());
-               BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-               BIO_push(io, ssl_bio);
-               got = BIO_read(io, buf, sizeof buf);
-       } else
     got = read(d->descriptor, buf, sizeof buf);
     if (got <= 0)
 	return 0;
@@ -2051,31 +1945,15 @@ close_sockets(const char *msg)
 {
     struct descriptor_data *d, *dnext;
     int socknum;
-    BIO *io, *ssl_bio;
 
     for (d = descriptor_list; d; d = dnext) {
         dnext = d->next;
-        if(d->ssl) {
-                io=BIO_new(BIO_f_buffer());
-                ssl_bio=BIO_new(BIO_f_ssl());
-                BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-                BIO_push(io, ssl_bio);
-                BIO_write(io, msg, strlen(msg));
-                BIO_write(io, shutdown_message, strlen(shutdown_message));
-                if (shutdown(d->descriptor, 2)<  0)
-                        perror("shutdown");
-                if(!SSL_shutdown(d->ssl))
-                        perror("shutdown");
-                SSL_free(d->ssl);
-                close(d->descriptor);
-        } else {
-                write(d->descriptor, msg, strlen(msg));
-                write(d->descriptor, shutdown_message, strlen(shutdown_message));
-                if (shutdown(d->descriptor, 2)<  0)
-                        perror("shutdown");
-                close(d->descriptor);
-        }
+        write(d->descriptor, msg, strlen(msg));
+        write(d->descriptor, shutdown_message, strlen(shutdown_message));
         clearstrings(d);			/** added to clean up **/
+        if (shutdown(d->descriptor, 2) < 0)
+            perror("shutdown");
+        close(d->descriptor);
         freeqs(d);				/****/
         *d->prev = d->next;			/****/
         if (d->next)				/****/
@@ -2088,7 +1966,7 @@ close_sockets(const char *msg)
         ndescriptors--;				/****/
     }
     for (socknum = 0; socknum < numsocks; socknum++) {
-	close(sock[socknum].s);
+	close(sock[socknum]);
     }
 }
 

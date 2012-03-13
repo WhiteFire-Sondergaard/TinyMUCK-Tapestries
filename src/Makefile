@@ -43,7 +43,7 @@ DEST=${ROOT}/bin
 # #######################################################################
 CC=gcc
 DEFS=-DHAVE_CONFIG_H
-LIBR= -lm -lnsl
+LIBR= -lm -lnsl -lssl
 
 # #######################################################################
 #  	   Usualy don't need to change anything past here.

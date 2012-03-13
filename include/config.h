@@ -117,6 +117,9 @@
 #define INFO_DIR  "data/info/"
 #define EDITOR_HELP_FILE "data/edit-help.txt" /* editor help file   */
 
+#define SSL_KEY_FILE "data/ssl_key.pem" /* SSL Certificate and Key */
+#define SSL_CA_DIR "/etc/ssl/certs/" /* Dir containing SSL CA */
+
 #define DELTAFILE_NAME "data/deltas-file"  /* The file for deltas */
 #define PARMFILE_NAME "data/parmfile.cfg"  /* The file for config parms */
 #define WORDLIST_FILE "data/wordlist.txt"  /* File for compression dict. */
