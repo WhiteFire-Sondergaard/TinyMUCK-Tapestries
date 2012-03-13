@@ -56,6 +56,16 @@
 #include "copyright.h"
 
 #include "db.h"
+//#include "balloc.h"
+#include "props.h"
+
+#ifndef NOPROTO
+#include "proto.h"
+#endif
+
+// ******************** LEGACY *********************
+//
+#ifdef LEGACY_PROTOTYPES
 
 /* Prototypes for externs not defined elsewhere */
 
@@ -323,4 +333,4 @@ extern long sel_prof_idle_sec;
 extern long sel_prof_idle_usec;
 extern unsigned long sel_prof_idle_use;
 
-
+#endif // LEGACY_PROTOTYPES

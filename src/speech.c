@@ -221,8 +221,6 @@ void
 notify_listeners(dbref who, dbref xprog, dbref obj,
 		 dbref room, const char *msg, int isprivate)
 {
-    char   *progstr;
-    int     prog;
     char buf[BUFFER_LEN];
     dbref ref;
 

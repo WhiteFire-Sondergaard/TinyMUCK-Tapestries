@@ -916,7 +916,7 @@ process_special(const char *token)
 	new->in.data.number = IN_RET;
 	return new;
     } else if (!string_compare(token, "IF")) {
-	struct INTERMEDIATE *curr;
+	// struct INTERMEDIATE *curr;
 
 	new = new_inst();
 	new->no = nowords++;
@@ -927,7 +927,7 @@ process_special(const char *token)
 	return new;
     } else if (!string_compare(token, "ELSE")) {
 	struct INTERMEDIATE *eef;
-	struct INTERMEDIATE *curr;
+	// struct INTERMEDIATE *curr;
 	struct INTERMEDIATE *after;
 
 	eef = find_if();
@@ -975,7 +975,7 @@ process_special(const char *token)
 	/* can't use 'if' because it's a reserved word */
 	struct INTERMEDIATE *eef;
 	struct INTERMEDIATE *beef;
-	struct INTERMEDIATE *curr;
+	// struct INTERMEDIATE *curr;
 
 	resolve_loop_addrs(nowords + 1);
 	eef = find_begin();
@@ -993,7 +993,7 @@ process_special(const char *token)
     } else if (!string_compare(token, "WHILE")) {
 	/* can't use 'if' because it's a reserved word */
 	struct INTERMEDIATE *eef;
-	struct INTERMEDIATE *curr;
+	// struct INTERMEDIATE *curr;
 
 	eef = locate_begin();
 	if (!eef)
@@ -1009,7 +1009,7 @@ process_special(const char *token)
     } else if (!string_compare(token, "BREAK")) {
 	/* can't use 'if' because it's a reserved word */
 	struct INTERMEDIATE *eef;
-	struct INTERMEDIATE *curr;
+	//struct INTERMEDIATE *curr;
 
 	eef = locate_begin();
 	if (!eef)
@@ -1026,7 +1026,7 @@ process_special(const char *token)
     } else if (!string_compare(token, "CONTINUE")) {
 	/* can't use 'if' because it's a reserved word */
 	struct INTERMEDIATE *beef;
-	struct INTERMEDIATE *curr;
+	//struct INTERMEDIATE *curr;
 
 	beef = locate_begin();
 	if (!beef)
@@ -1042,7 +1042,7 @@ process_special(const char *token)
 	/* can't use 'if' because it's a reserved word */
 	struct INTERMEDIATE *eef;
 	struct INTERMEDIATE *beef;
-	struct INTERMEDIATE *curr;
+	//struct INTERMEDIATE *curr;
 
 	resolve_loop_addrs(nowords + 1);
 	eef = find_begin();
@@ -1059,7 +1059,7 @@ process_special(const char *token)
 
 	return new;
     } else if (!string_compare(token, "CALL")) {
-	struct INTERMEDIATE *curr;
+	//struct INTERMEDIATE *curr;
 
 	new = new_inst();
 	new->no = nowords++;

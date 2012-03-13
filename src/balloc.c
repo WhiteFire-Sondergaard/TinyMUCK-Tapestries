@@ -242,7 +242,7 @@ balloc_fixed(memblk **ptr, int items, int size)
     return (memblock_datum_ptr((*ptr), i));
 }
 
-static purge_countdown = FREE_BLOCK_POOL;
+static int purge_countdown = FREE_BLOCK_POOL;
 
 void
 bfree_memptr(memptr mp)

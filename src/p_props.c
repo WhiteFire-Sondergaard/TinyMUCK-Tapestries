@@ -19,8 +19,8 @@
 #include "interp.h"
 
 static struct inst *oper1, *oper2, *oper3, *oper4;
-static struct inst temp1, temp2, temp3;
-static int tmp, result;
+//static struct inst temp1, temp2, temp3;
+static int /* tmp, */ result;
 static dbref ref;
 static char buf[BUFFER_LEN];
 
@@ -70,7 +70,7 @@ prim_getpropval(PRIM_PROTOTYPE)
 	char   *type;
 
 	type = oper1->data.string->data;
-	while (type = index(type, PROPDIR_DELIMITER))
+	while ((type = index(type, PROPDIR_DELIMITER)))
 	    if (!(*(++type)))
 		abort_interp("Cannot access a propdir directly.");
     }
@@ -121,7 +121,7 @@ prim_getprop(PRIM_PROTOTYPE)
 	char  *tmpptr;
 
 	tmpptr = oper1->data.string->data;
-	while (tmpptr = index(tmpptr, PROPDIR_DELIMITER))
+	while ((tmpptr = index(tmpptr, PROPDIR_DELIMITER)))
 	    if (!(*(++tmpptr)))
 		abort_interp("Cannot access a propdir directly.");
 
@@ -199,7 +199,7 @@ prim_getpropstr(PRIM_PROTOTYPE)
 	PropPtr ptr;
 
 	tmpptr = oper1->data.string->data;
-	while (tmpptr = index(tmpptr, PROPDIR_DELIMITER))
+	while ((tmpptr = index(tmpptr, PROPDIR_DELIMITER)))
 	    if (!(*(++tmpptr)))
 		abort_interp("Cannot access a propdir directly.");
 
@@ -273,7 +273,7 @@ prim_remove_prop(PRIM_PROTOTYPE)
 	char   *type;
 
 	type = oper1->data.string->data;
-	while (type = index(type, PROPDIR_DELIMITER))
+	while ((type = index(type, PROPDIR_DELIMITER)))
 	    if (!(*(++type)))
 		abort_interp("Cannot access a propdir directly.");
     }
@@ -318,10 +318,10 @@ prim_envprop(PRIM_PROTOTYPE)
 	char    tname[BUFFER_LEN];
 	dbref   what;
 	PropPtr ptr;
-	const char *temp;
+	// const char *temp;
 
 	type = oper1->data.string->data;
-	while (type = index(type, PROPDIR_DELIMITER))
+	while ((type = index(type, PROPDIR_DELIMITER)))
 	    if (!(*(++type)))
 		abort_interp("Cannot access a propdir directly.");
 	strcpy(tname, oper1->data.string->data);
@@ -392,7 +392,7 @@ prim_envpropstr(PRIM_PROTOTYPE)
 	const char *temp;
 
 	type = oper1->data.string->data;
-	while (type = index(type, PROPDIR_DELIMITER))
+	while ((type = index(type, PROPDIR_DELIMITER)))
 	    if (!(*(++type)))
 		abort_interp("Cannot access a propdir directly.");
 	strcpy(tname, oper1->data.string->data);
@@ -488,7 +488,7 @@ prim_setprop(PRIM_PROTOTYPE)
 	    abort_interp("Illegal propname");
 
 	tmpe = oper2->data.string->data;
-	while (tmpe = index(tmpe, PROPDIR_DELIMITER))
+	while ((tmpe = index(tmpe, PROPDIR_DELIMITER)))
 	    if (!(*(++tmpe)))
 		abort_interp("Cannot access a propdir directly.");
 
@@ -566,7 +566,7 @@ prim_addprop(PRIM_PROTOTYPE)
 
 	tmpe = oper3->data.string->data;
 
-	while (tmpe = index(tmpe, PROPDIR_DELIMITER))
+	while ((tmpe = index(tmpe, PROPDIR_DELIMITER)))
 	    if (!(*(++tmpe)))
 		abort_interp("Cannot access a propdir directly.");
 
@@ -717,7 +717,7 @@ prim_parseprop(PRIM_PROTOTYPE)
         char  *tmpptr;
 
         tmpptr = oper1->data.string->data;
-        while (tmpptr = index(tmpptr, PROPDIR_DELIMITER))
+        while ((tmpptr = index(tmpptr, PROPDIR_DELIMITER)))
             if (!(*(++tmpptr)))
                 abort_interp("Cannot access a propdir directly.");
 

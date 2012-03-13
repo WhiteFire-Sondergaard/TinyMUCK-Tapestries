@@ -108,6 +108,8 @@
 #define alloc_compressed(x) alloc_string(x)
 #endif				/* COMPRESS */
 
+extern int force_level;
+
 
 static dbref 
 match_controlled(dbref player, const char *name)
@@ -142,6 +144,21 @@ do_name(dbref player, const char *name, char *newname)
 	}
 	/* check for renaming a player */
 	if (Typeof(thing) == TYPE_PLAYER) {
+            /* Only wizards can @name players */
+	    if (!Wizard(player))
+	    {
+                notify(player, "Only wizards can rename players.");
+		return;
+	    }
+
+	    /* Wizards can't rename each other.... */
+	    if (player != thing && TrueWizard(thing))
+	    {
+                notify(player, "You may not rename another wizard.");
+		return;
+	    }
+
+#ifdef OLD_DO_NAME_PASSWORD_CHECK
 	    /* split off password */
 	    for (password = newname;
 		    *password && !isspace(*password);
@@ -161,7 +178,10 @@ do_name(dbref player, const char *name, char *newname)
 	    } else if (strcmp(password, DoNull(DBFETCH(thing)->sp.player.password))) {
 		notify(player, "Incorrect password.");
 		return;
-	    } else if (string_compare(newname, NAME(thing))
+	    }
+#endif
+	    
+	    if (string_compare(newname, NAME(thing))
 		       && !ok_player_name(newname)) {
 		notify(player, "You can't give a player that name.");
 		return;

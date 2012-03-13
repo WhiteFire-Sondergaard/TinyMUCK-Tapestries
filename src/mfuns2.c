@@ -13,7 +13,7 @@
 #include "interface.h"
 #include "msgparse.h"
 
-
+extern int force_level;
 
 /***** Insert MFUNs here *****/
 
@@ -334,7 +334,6 @@ mfn_name(MFUNARGS)
 const char *
 mfn_fullname(MFUNARGS)
 {
-    char *ptr;
     dbref obj = mesg_dbref_proximity(player, what, perms, argv[0]);
 
     if (obj == UNKNOWN)
@@ -389,7 +388,6 @@ getlitem(char *buf, char *list, char *sep, int line)
     char *ptr, *ptr2;
     char tmpchr;
     int seplen;
-    int count = 1;
 
     seplen = strlen(sep);
     ptr = ptr2 = list;
@@ -517,9 +515,8 @@ mfn_count(MFUNARGS)
 const char *
 mfn_with(MFUNARGS)
 {
-    char valbuf[BUFFER_LEN];
     char vbuf[BUFFER_LEN];
-    char *ptr, *valptr, *vptr;
+    char *ptr, *valptr;
     int v, cnt;
 
     ptr = MesgParse(argv[0], argv[0]);
@@ -555,7 +552,7 @@ mfn_fold(MFUNARGS)
     char tmp2[BUFFER_LEN];
     char   *ptr, *ptr2;
     char *sepin = argv[4];
-    int seplen, v, v2;
+    int seplen, v;
 
     ptr = MesgParse(argv[0],argv[0]);
     CHECKRETURN(ptr,"FOLD","arg 1");
@@ -1337,7 +1334,6 @@ mfn_muf(MFUNARGS)
 const char *
 mfn_force(MFUNARGS)
 {
-    int i, cnt;
     char *nxt, *ptr;
     dbref obj = mesg_dbref_raw(player, what, perms, argv[0]);
     if (obj == AMBIGUOUS || obj == UNKNOWN || obj == NOTHING || obj == HOME)
@@ -1398,7 +1394,7 @@ mfn_force(MFUNARGS)
 const char *
 mfn_midstr(MFUNARGS)
 {
-    int i, inc, len = strlen(argv[0]);
+    int i, len = strlen(argv[0]);
     int pos1 = atoi(argv[1]);
     int pos2 = pos1;
     char *ptr = buf;

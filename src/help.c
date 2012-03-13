@@ -84,9 +84,8 @@ spit_file_segment(dbref player, const char *filename, const char *seg)
 {
     FILE   *f;
     char    buf[BUFFER_LEN];
-    char    buf2[BUFFER_LEN];
     char    segbuf[BUFFER_LEN];
-    char   *p, *ptr;
+    char   *p;
     int     startline, endline, currline;
 
     startline = endline = currline = 0;
@@ -215,7 +214,6 @@ show_subfile(dbref player, const char *dir, const char *topic, const char *seg,
 	     int partial)
 {
     char   buf[256];
-    char   *ptr;
     struct stat st;
 #ifdef DIR_AVALIBLE
     DIR		*df;
@@ -234,9 +232,9 @@ show_subfile(dbref player, const char *dir, const char *topic, const char *seg,
     /* TO DO: (1) exact match, or (2) partial match, but unique */
     *buf = 0;
 
-    if (df = (DIR *) opendir(dir))
+    if ((df = (DIR *) opendir(dir)))
     {
-        while (dp = readdir(df))
+        while ((dp = readdir(df)))
         {
             if ((partial  && string_prefix(dp->d_name, topic)) ||
                 (!partial && !string_compare(dp->d_name, topic))
@@ -349,7 +347,6 @@ void
 do_info(dbref player, const char *topic, const char *seg)
 {
     char	*buf;
-    struct	stat st;
 #ifdef DIR_AVALIBLE
     DIR		*df;
     struct dirent *dp;
@@ -368,9 +365,9 @@ do_info(dbref player, const char *topic, const char *seg)
 	(void) strcpy(buf, "    ");
 	f = 0;
 	cols = 0;
-	if (df = (DIR *) opendir(INFO_DIR)) 
+	if ((df = (DIR *) opendir(INFO_DIR)))
 	{
-	    while (dp = readdir(df))
+	    while ((dp = readdir(df)))
 	    {
 		
 		if (*(dp->d_name) != '.') 

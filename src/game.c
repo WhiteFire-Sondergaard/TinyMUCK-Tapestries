@@ -265,7 +265,6 @@ panic(const char *message)
 {
     char    panicfile[2048];
     FILE   *f;
-    int     i;
 
     log_status("PANIC: %s\n", message);
     fprintf(stderr, "PANIC: %s\n", message);
@@ -334,9 +333,6 @@ time_t last_monolithic_time = 0;
  */
 void fork_and_dump(void)
 {
-    int     child;
-    FILE   *infile_temp;
-
     epoch++;
 
     last_monolithic_time = current_systime;
@@ -347,7 +343,7 @@ void fork_and_dump(void)
 }
 
 #ifdef DELTADUMPS
-extern deltas_count;
+extern int deltas_count;
 
 int
 time_for_monolithic(void)

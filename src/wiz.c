@@ -125,6 +125,17 @@
 #include "match.h"
 #include "externs.h"
 
+extern int force_level;
+
+/* For MPI profiling */
+extern time_t mpi_prof_start_time;
+/* For select idle profiling */
+extern time_t sel_prof_start_time;
+extern long sel_prof_idle_sec;
+extern long sel_prof_idle_usec;
+extern unsigned long sel_prof_idle_use;
+
+
 void 
 do_teleport(dbref player, const char *arg1, const char *arg2)
 {

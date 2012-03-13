@@ -190,8 +190,6 @@ int
 can_doit(dbref player, dbref thing, const char *default_fail_msg)
 {
     dbref   loc;
-    char    buf[BUFFER_LEN];
-    char    buf2[BUFFER_LEN];
 
     if ((loc = getloc(player)) == NOTHING)
 	return 0;

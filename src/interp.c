@@ -62,7 +62,9 @@ RCLEAR(struct inst * oper, char *file, int line)
 {
     if (oper->type == PROG_CLEARED) {
 	fprintf(stderr, "Attempt to re-CLEAR() instruction from %s:%hd "
-"previously CLEAR()ed in %s:%d\n", file, line, oper->data.addr, oper->line);
+"previously CLEAR()ed in %s:%d\n", file, line, 
+		(char *)oper->data.addr, // This is probably WRONG
+	       	oper->line);
 	return;
     }
     if (oper->type == PROG_ADD) {
@@ -79,8 +81,6 @@ RCLEAR(struct inst * oper, char *file, int line)
     oper->data.addr = (void *)file;
     oper->type = PROG_CLEARED;
 }
-
-void    push(struct inst * stack, int *top, int type, voidptr res);
 
 int     valid_object(struct inst * oper);
 
@@ -758,7 +758,8 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 		break;
 	    case PROG_CLEARED:
 		fprintf(stderr, "Attempt to execute instruction cleared by %s:%hd in program %d\n",
-		       pc->data.addr, pc->line, program);
+		       (char *)pc->data.addr,  // This is probably WRONG
+		       pc->line, program);
 		pc = NULL;
 		abort_loop("Program internal error. Program erroneously freed from memory.", NULL, NULL);
 	    default:
@@ -841,7 +842,7 @@ interp_err(dbref player, dbref program, struct inst *pc,
 
 
 void 
-push(struct inst *stack, int *top, int type, voidptr res)
+push(struct inst *stack, int *top, int type, void *res)
 {
     stack[*top].type = type;
     if (type < PROG_STRING)

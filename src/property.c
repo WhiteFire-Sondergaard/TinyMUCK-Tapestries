@@ -83,7 +83,7 @@ extern const char *old_uncompress(const char *);
 void
 set_property_nofetch(dbref player, const char *type, int flags, int value)
 {
-    PropPtr p, l;
+    PropPtr p;
     char buf[BUFFER_LEN];
     char   *n, *w;
 
@@ -255,7 +255,7 @@ remove_property_list(dbref player, int all)
     fetchprops(player);
 #endif
 
-    if (l = DBFETCH(player)->properties) {
+    if ((l = DBFETCH(player)->properties)) {
 	p = first_node(l);
 	while (p) {
 	    n = next_node(l, PropName(p));
@@ -280,7 +280,7 @@ remove_property_nofetch(dbref player, const char *type)
 {
     PropPtr l;
     char buf[BUFFER_LEN];
-    char   *n, *w;
+    char   *w;
 
     w = strcpy(buf, type);
 
@@ -309,9 +309,9 @@ remove_property(dbref player, const char *type)
 PropPtr 
 get_property(dbref player, const char *type)
 {
-    PropPtr p, l;
+    PropPtr p;
     char buf[BUFFER_LEN];
-    char   *n, *w;
+    char   *w;
 
 #ifdef DISKBASE
     fetchprops(player);
@@ -510,7 +510,8 @@ extern const char *lowercase; /* use the lookup table... */
 int 
 genderof(dbref player)
 {
-    char sex[101], *str;
+    char sex[101];
+    const char *str;
     int i;
     PropPtr p;
     
@@ -534,7 +535,7 @@ genderof(dbref player)
 
     for (i = 0; i < 100 && str[i]; i++)
     {
-        sex[i] = lowercase[str[i]];
+        sex[i] = tolower(str[i]);
     }
     sex[i] = 0;
 
@@ -722,8 +723,7 @@ size_properties(dbref player, int load)
 int 
 is_propdir_nofetch(dbref player, const char *type)
 {
-    PropPtr p, l;
-    char   *n;
+    PropPtr p;
     char w[BUFFER_LEN];
 
     strcpy(w, type);
@@ -975,8 +975,6 @@ void
 db_dump_props_rec(dbref obj, FILE *f, const char *dir, PropPtr p)
 {
     char buf[BUFFER_LEN];
-    char *ptr;
-    const char *ptr2;
     long tpos = 0;
     int flg;
     short wastouched = 0;

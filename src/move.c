@@ -348,8 +348,6 @@ trigger(dbref player, dbref exit, int pflag)
     int     sobjact;		/* sticky object action flag, sends home
 				 * source obj */
     int     succ;
-    char    buf[BUFFER_LEN];
-    char    buf2[BUFFER_LEN];
 
     sobjact = 0;
     succ = 0;
@@ -632,7 +630,6 @@ do_drop(dbref player, const char *name, const char *obj)
     dbref   loc, cont;
     dbref   thing;
     char    buf[BUFFER_LEN];
-    char    buf2[BUFFER_LEN];
     struct match_data md;
 
     if ((loc = getloc(player)) == NOTHING)

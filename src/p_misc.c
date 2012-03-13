@@ -16,9 +16,12 @@
 #include "strings.h"
 #include "interp.h"
 
+extern int force_level;
+
+
 static struct inst *oper1, *oper2, *oper3, *oper4;
-static struct inst temp1, temp2, temp3;
-static int tmp, result;
+//static struct inst temp1, temp2, temp3;
+static int /* tmp, */ result;
 static dbref ref;
 static char buf[BUFFER_LEN];
 struct tm *time_tm;
@@ -257,7 +260,7 @@ prim_timestamps(PRIM_PROTOTYPE)
     PushInt(result);
 }
 
-extern  top_pid;
+extern int top_pid;
 
 void 
 prim_fork(PRIM_PROTOTYPE)

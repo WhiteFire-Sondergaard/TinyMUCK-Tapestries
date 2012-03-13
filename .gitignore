@@ -1,3 +1,4 @@
 *.o
 src/orig
 *~
+cscope.out

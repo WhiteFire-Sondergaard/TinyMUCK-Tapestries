@@ -652,10 +652,7 @@ tune_load_parms_from_file(FILE *f, dbref player, int cnt)
 void
 tune_load_parmsfile(dbref player)
 {
-    char buf[BUFFER_LEN];
-    char *c, *p;
     FILE   *f;
-    int result;
 
     f = fopen(PARMFILE_NAME, "r");
     if (!f) {

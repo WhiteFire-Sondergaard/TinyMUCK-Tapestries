@@ -79,14 +79,19 @@ LINTFLAGS= -I${INCLUDE}
 
 MISCSRC= Makefile ChangeLog COPYING mkversion.sh
 
-CSRC= balloc.c boolexp.c case.c compile.c compress.c create.c db.c \
+PROTSRC= boolexp.c case.c compile.c compress.c create.c db.c \
 	debugger.c disassem.c diskprop.c edit.c events.c game.c hashtab.c \
-	help.c inst.c interp.c log.c look.c match.c mfuns.c mfuns2.c \
+	help.c inst.c interp.c log.c look.c \
 	msgparse.c move.c crt_malloc.c oldcompress.c player.c predicates.c \
 	p_connects.c p_db.c p_math.c p_misc.c p_props.c p_stack.c p_strings.c \
 	property.c propdirs.c props.c rob.c rwho.c sanity.c set.c signal.c \
 	smatch.c speech.c strftime.c stringutil.c timequeue.c timestamp.c \
 	tune.c unparse.c utils.c wiz.c
+
+CSRC= ${PROTSRC} \
+	balloc.c \
+	match.c \
+	mfuns.c mfuns2.c
 
 LSRC= copyright.c
 MSRC= olddecomp.c reconst.c interface.c
@@ -168,6 +173,8 @@ depend:
 	echo chmod -w Makefile
 	chmod -w Makefile
 
+prototype:
+	cproto -DNOPROTO -I ../include/ -o ../include/proto.h ${PROTSRC} interface.c version.c
 
 ########################################################
 # Cleanup stuff.

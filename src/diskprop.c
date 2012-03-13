@@ -105,7 +105,7 @@ addobject_ringqueue(dbref obj, int mode)
 }
 
 
-dbref
+static dbref
 first_ringqueue_obj(struct pload_Q *ref)
 {
     if (!ref) return NOTHING;
@@ -113,7 +113,7 @@ first_ringqueue_obj(struct pload_Q *ref)
 }
 
 
-dbref
+static dbref
 next_ringqueue_obj(struct pload_Q *ref, dbref obj)
 {
     if (DBFETCH(obj)->nextold == ref->obj)

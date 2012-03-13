@@ -27,7 +27,7 @@ static char buf[BUFFER_LEN];
 void 
 copyobj(dbref player, dbref old, dbref new)
 {
-    struct object *oldp = DBFETCH(old);
+    //struct object *oldp = DBFETCH(old);
     struct object *newp = DBFETCH(new);
 
     NAME(new) = alloc_string(NAME(old));
@@ -102,9 +102,9 @@ void
 prim_moveto(PRIM_PROTOTYPE)
 {
     struct inst *oper1, *oper2 /* , *oper3, *oper4 */;
-    struct inst temp1, temp2, temp3;
-    int tmp, result;
-    dbref ref;
+    //struct inst temp1, temp2, temp3;
+    //int tmp, result;
+    //dbref ref;
 
     CHECKOP(2);
     oper1 = POP();
@@ -439,8 +439,8 @@ void
 prim_match(PRIM_PROTOTYPE)
 {
     struct inst *oper1 /* , *oper2, *oper3, *oper4 */;
-    struct inst temp1, temp2, temp3;
-    int tmp, result;
+    //struct inst temp1, temp2, temp3;
+    //int tmp, result;
     dbref ref;
 
     CHECKOP(1);
@@ -483,8 +483,8 @@ void
 prim_rmatch(PRIM_PROTOTYPE)
 {
     struct inst *oper1, *oper2 /* , *oper3, *oper4 */;
-    struct inst temp1, temp2, temp3;
-    int tmp, result;
+    //struct inst temp1, temp2, temp3;
+    //int tmp, result;
     dbref ref;
 
     CHECKOP(2);

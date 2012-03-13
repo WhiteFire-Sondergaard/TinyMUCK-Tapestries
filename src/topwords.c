@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "externs.h"
@@ -159,7 +160,6 @@ struct queue_node *
 queue_add_node(const char *word, int pri)
 {
     struct queue_node *new;
-    int len;
     hash_data hd;
 
     new = (struct queue_node *)malloc(sizeof(struct queue_node));
@@ -234,25 +234,9 @@ void
 remember_word_variants(const char *in)
 {
     char word[32];
-    char *h, *t;
 
     strcpy(word, in);
     add_to_list(word);
-    /*
-    t = word + strlen(word);
-    while (t > word) {
-	h = word;
-	while (h < t) {
-	    add_to_list(h);
-	    h++;
-	}
-	t--;
-	if (*t == ' ') {
-	    t--;
-	}
-	*t = '\0';
-    }
-    */
 }
 
 void
@@ -261,7 +245,6 @@ remember_words_in_string(const char *in)
     char buf[32];
     const char *h;
     char *o;
-    int len;
 
     h = in;
     while (*h) {
@@ -334,6 +317,8 @@ main (int argc, char**argv)
     list_top_4k_words();
     /* printf("%d unique words found.\n", total_words); */
     /* printf("%d counted words.\n", counted_words); */
+
+    return 0;
 }
 
 

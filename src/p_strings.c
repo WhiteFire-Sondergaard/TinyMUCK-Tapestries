@@ -18,7 +18,7 @@
 #include "interp.h"
 
 static struct inst *oper1, *oper2, *oper3, *oper4;
-static struct inst temp1, temp2, temp3;
+static struct inst temp1, temp2 /*, temp3 */;
 static int tmp, result;
 static dbref ref;
 static char buf[BUFFER_LEN];
@@ -563,7 +563,7 @@ prim_tolower(PRIM_PROTOTYPE)
 	buf[0] = '\0';
     }
     for (ref = 0; buf[ref]; ref++)
-	buf[ref] = DOWNCASE(buf[ref]);
+	buf[ref] = tolower(buf[ref]);
     CLEAR(oper1);
     PushString(buf);
 }

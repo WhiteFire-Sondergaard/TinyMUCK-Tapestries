@@ -80,7 +80,7 @@
 
 extern const char *uppercase, *lowercase;
 
-#define DOWNCASE(x) (lowercase[x])
+#define DOWNCASE(x) (tolower((x)))
 
 #ifdef COMPRESS
 extern const char *uncompress(const char *);
@@ -452,7 +452,7 @@ name_mangle(dbref obj)
 #endif
 }
 
-const char *unmangle(dbref player, char *s)
+const char *unmangle(dbref player, const char *s)
 {
 #if defined(ANONYMITY)
     char	in[16384];

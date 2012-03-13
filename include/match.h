@@ -47,6 +47,8 @@ extern void init_match(dbref player, const char *name, int type,
 		       struct match_data *md);
 extern void init_match_check_keys(dbref player, const char *name, int type,
 				  struct match_data *md);
+extern void init_match_remote(dbref player, dbref what, const char *name, int type, struct match_data * md);
+
 
 /* match (LOOKUP_TOKEN)player */
 extern void match_player(struct match_data *md);

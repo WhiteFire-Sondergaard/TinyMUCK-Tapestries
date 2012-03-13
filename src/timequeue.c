@@ -71,6 +71,7 @@ typedef struct timenode {
 static timequeue tqhead = NULL;
 
 void    prog_clean(struct frame * fr);
+static int has_refs(dbref program, timequeue ptr);
 
 static int
 valid_objref(dbref obj)
@@ -415,10 +416,9 @@ handle_read_event(dbref player, const char *command)
 void
 next_timequeue_event()
 {
-    struct frame *tmpfr;
     dbref   tmpcp;
     int     tmpbl, tmpfg;
-    timequeue ptr, lastevent, event;
+    timequeue lastevent, event;
     int     maxruns = 0;
     time_t  rtime = time((time_t *) NULL);
 
@@ -628,9 +628,10 @@ dequeue_prog(dbref program, int sleeponly)
 	ptr = tqhead->next;
 	while (ptr) {
 	    if ((ptr->called_prog == program) ||
-		    (has_refs(program, ptr)) || (ptr->uid == program)
-		    && ((ptr->fr) ? (!((ptr->fr->multitask == BACKGROUND) &&
-				       (sleeponly == 2))) : (!sleeponly))) {
+		    (has_refs(program, ptr)) || 
+		    ( (ptr->uid == program) && 
+		      ((ptr->fr) ? (!((ptr->fr->multitask == BACKGROUND) &&
+		      (sleeponly == 2))) : (!sleeponly)) )) {
 		tmp->next = ptr->next;
 		free_timenode(ptr);
 		process_count--;
@@ -737,7 +738,7 @@ do_dequeue(dbref player, const char *arg1)
 		}
 		notify_nolisten(player, buf, 1);
 	    } else {
-		if (count = atoi(arg1)) {
+		if ((count = atoi(arg1))) {
 		    if (!control_process(player, count)) {
 			notify_nolisten(player, "Permission denied.", 1);
 			return;
@@ -760,7 +761,7 @@ do_dequeue(dbref player, const char *arg1)
 
 /* Checks the MUF timequeue for address references on the stack or */
 /* dbref references on the callstack */
-int
+static int
 has_refs(dbref program, timequeue ptr)
 {
     int loop;
@@ -906,7 +907,7 @@ propqueue(dbref player, dbref where, dbref trigger, dbref what, dbref xclude,
     strcpy(buf, propname);
     if (is_propdir(what, buf)) {
 	strcat(buf, "/");
-	while (pname = next_prop_name(what, exbuf, buf)) {
+	while ((pname = next_prop_name(what, exbuf, buf))) {
 	    strcpy(buf, pname);
 	    propqueue(player,where,trigger,what,xclude,buf,toparg,mlev,mt);
 	}
@@ -1017,7 +1018,7 @@ listenqueue(dbref player, dbref where, dbref trigger, dbref what, dbref xclude,
     strcpy(buf, propname);
     if (is_propdir(what, buf)) {
 	strcat(buf, "/");
-	while (pname = next_prop_name(what, exbuf, buf)) {
+	while ((pname = next_prop_name(what, exbuf, buf))) {
 	    strcpy(buf, pname);
 	    listenqueue(player, where, trigger, what, xclude, buf,
 			toparg, mlev, mt, mpi_p);

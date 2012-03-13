@@ -129,7 +129,7 @@ propdir_get_elem(PropPtr l, char *path)
 	return(NULL);
     } else {
 	/* aha, we are finally to the property subname itself. */
-        if(p = locate_prop(l, path))
+        if ((p = locate_prop(l, path)))
 	    return(p);  /* found the property! */
 	return(NULL);   /* nope, doesn't exist */
     }
@@ -143,7 +143,6 @@ PropPtr
 propdir_first_elem(PropPtr l, char *path)
 {
     PropPtr p;
-    char *n;
     while (*path && *path == PROPDIR_DELIMITER) path++;
     if (!*path) return(first_node(l));
     p = propdir_get_elem(l, path);
@@ -188,7 +187,7 @@ int
 propdir_check(PropPtr l, char *path)
 {
     PropPtr p;
-    if (p = propdir_get_elem(l, path))
+    if ((p = propdir_get_elem(l, path)))
 	return(PropDir(p) != NULL);
     return(0);
 }

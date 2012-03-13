@@ -1,4 +1,6 @@
 /* Property struct */
+#ifndef PROPS_H
+#define PROPS_H
 struct plist {
     unsigned short flags;
     short   height;		/* satisfy the avl monster.  */
@@ -139,6 +141,7 @@ extern PropPtr envprop(dbref *where, const char *propname, int typ);
 extern void delete_proplist(PropPtr p);
 
 #ifdef DISKBASE
+extern void dispose_all_oldprops(void);
 extern int fetchprops_priority(dbref obj, int mode);
 extern int fetchprops_nostamp(dbref obj);
 extern void fetchprops(dbref obj);
@@ -162,4 +165,4 @@ extern int db_get_single_prop(FILE *f, dbref obj, long pos);
 extern void db_getprops(FILE *f, dbref obj);
 extern void db_dump_props(FILE *f, dbref obj);
 
-
+#endif

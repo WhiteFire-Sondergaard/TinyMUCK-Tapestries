@@ -288,7 +288,6 @@ do_look_at(dbref player, const char *name, const char *detail)
 {
     dbref   thing;
     struct match_data md;
-    int res;
     char buf[BUFFER_LEN];
     char obj_num[20];
 
@@ -382,8 +381,7 @@ do_look_at(dbref player, const char *name, const char *detail)
 	    lastmatch = (PropPtr) NOTHING;
 	    propadr = first_prop(thing, "_details/", &pptr, propname);
 	    while ((int)propadr > 0) {
-                res = exit_prefix(propname, buf);
-		if(res) {
+		if(exit_prefix(propname, buf) != NULL) {
 		    if(lastmatch != (PropPtr) NOTHING) {
                         lastmatch= (PropPtr) AMBIGUOUS;
                         break;
@@ -567,15 +565,12 @@ void
 do_examine(dbref player, const char *name, const char *dir)
 {
     dbref   thing;
-    char    buf[BUFFER_LEN], pname[BUFFER_LEN], buf2[BUFFER_LEN];
+    char    buf[BUFFER_LEN];
     dbref   content;
     dbref   exit;
     int     i, cnt;
     struct match_data md;
-    char   *prop;
-    char propname[BUFFER_LEN];
     struct tm *time_tm;		/* used for timestamps */
-    PropPtr propadr, pptr;
 
     if (*name == '\0') {
 	if ((thing = getloc(player)) == NOTHING)
@@ -886,7 +881,7 @@ do_inventory(dbref player)
 
 extern const char *uppercase;
 
-#define UPCASE(x) (uppercase[x])
+#define UPCASE(x) (toupper((x)))
 
 struct flgchkdat {
     int     fortype;		/* check FOR a type? */
@@ -914,7 +909,7 @@ struct flgchkdat {
 };
 
 
-int 
+static int 
 init_checkflags(dbref player, const char *flags, struct flgchkdat *check)
 {
     char    buf[BUFFER_LEN];
@@ -1174,7 +1169,7 @@ init_checkflags(dbref player, const char *flags, struct flgchkdat *check)
 }
 
 
-int 
+static int 
 checkflags(dbref what, struct flgchkdat check)
 {
     if (check.fortype && (Typeof(what) != check.istype))
@@ -1471,7 +1466,7 @@ do_entrances(dbref player, const char *name, const char *flags)
 void 
 do_contents(dbref player, const char *name, const char *flags)
 {
-    dbref   i, j;
+    dbref   i;
     dbref   thing;
     struct match_data md;
     struct flgchkdat check;
@@ -1551,7 +1546,6 @@ void
 exit_match_exists(dbref player, dbref obj, const char *name)
 {
     dbref exit;
-    char *ptr;
     char buf[BUFFER_LEN];
     exit = DBFETCH(obj)->exits;
     while (exit != NOTHING) {

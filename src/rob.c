@@ -105,7 +105,6 @@ do_kill(dbref player, const char *what, int cost)
 {
     dbref   victim;
     char    buf[BUFFER_LEN];
-    char    buf2[BUFFER_LEN];
     struct match_data md;
 
     init_match(player, what, TYPE_PLAYER, &md);

@@ -411,7 +411,7 @@ Prop_Check(const char *name, const char what)
 {
     if (*name == what)
 	return (1);
-    while (name = (char *)index(name, PROPDIR_DELIMITER)) {
+    while ((name = (char *)index(name, PROPDIR_DELIMITER))) {
 	if (name[1] == what)
 	    return (1);
 	name++;

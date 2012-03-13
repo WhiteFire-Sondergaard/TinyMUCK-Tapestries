@@ -124,7 +124,7 @@ const char *
 mfn_delprop(MFUNARGS)
 {
     dbref   obj = what;
-    char   *ptr, *pname;
+    char   *pname;
 
     pname = argv[0];
     if (argc > 1) {
@@ -249,8 +249,8 @@ mfn_indexbang(MFUNARGS)
 const char *
 mfn_propdir(MFUNARGS)
 {
-    dbref   trg, obj = what;
-    const char   *ptr, *pname;
+    dbref   obj = what;
+    const char   *pname;
 
     pname = argv[0];
     if (argc == 2) {
@@ -389,7 +389,7 @@ mfn_select(MFUNARGS)
     dbref   obj = what;
     char   *pname;
     const char *ptr;
-    int i;
+    int i, c;
 
     pname = argv[1];
     if (argc == 3) {
@@ -406,9 +406,10 @@ mfn_select(MFUNARGS)
      */
 
     i = atoi(argv[0]);
+    c = 0;
     do {
-	ptr = get_list_item(player, obj, perms, pname, i--);
-    } while (i >= 0 && ptr && !*ptr);
+	ptr = get_list_item(player, obj, perms, pname, i--); c++;
+    } while (i >= 0 && c < 1000 && ptr && !*ptr);
     if (!ptr) ABORT_MPI("SELECT","Failed list read.");
     return ptr;
 }
@@ -1109,7 +1110,7 @@ mfn_dice(MFUNARGS)
 const char *
 mfn_default(MFUNARGS)
 {
-    char   *fbr, *ptr;
+    char   *ptr;
 
     *buf = '\0';
     ptr = MesgParse(argv[0], buf);
@@ -1181,7 +1182,6 @@ mfn_null(MFUNARGS)
 const char *
 mfn_tzoffset(MFUNARGS)
 {
-    time_t lt = time((long *) 0);
     sprintf(buf, "%ld", get_tz_offset());
     return buf;
 }
@@ -1245,7 +1245,6 @@ mfn_ftime(MFUNARGS)
 const char *
 mfn_convtime(MFUNARGS)
 {
-    time_t ttm;
     struct tm otm;
     int mo, dy, yr, hr, mn, sc;
     yr = 70;

@@ -758,7 +758,7 @@ msg_is_macro(dbref player, dbref what, dbref perms, const char *name)
 }
 
 
-void
+static void
 msg_unparse_macro(dbref player, dbref what, dbref perms, char *name, int argc, argv_typ argv, char *rest, int maxchars)
 {
     const char   *ptr;
@@ -865,7 +865,7 @@ mesg_init(void)
 
 
 /******** HOOK ********/
-int
+static int
 mesg_args(char *wbuf, argv_typ argv, char ulv, char sep, char dlv, char quot, int maxargs)
 {
     int     r, lev, argc = 0;
@@ -948,10 +948,9 @@ mesg_parse(dbref player, dbref what, dbref perms, const char *inbuf, char *outbu
     char    ebuf[BUFFER_LEN];
     char    cmdbuf[MAX_MFUN_NAME_LEN + 1];
     const char *ptr;
-    char *ptr2, *pname, *dptr;
-    int     p, q, r, s;
-    int i;
-    dbref   obj;
+    char    *dptr;
+    int     p, q, s;
+    int     i;
     char    argv[9][BUFFER_LEN];
     int     argc;
     int showtextflag = 0;
@@ -1215,7 +1214,7 @@ mesg_parse(dbref player, dbref what, dbref perms, const char *inbuf, char *outbu
     outbuf[q] = '\0';
     if ((mesgtyp & MPI_ISDEBUG) && showtextflag) {
         char *zptr = get_mvar("how");
-        sprintf(dbuf, "%s %*s\"%s\"", zptr, (mesg_rec_cnt*2-4), "",
+        sprintf(dbuf, "%s %*s\"%.512s\"", zptr, (mesg_rec_cnt*2-4), "",
                 cr2slash(buf2, outbuf));
         notify_nolisten(player, dbuf, 1);
     }

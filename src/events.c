@@ -6,6 +6,8 @@
 #include "tune.h"
 #include "externs.h"
 
+extern void dispose_all_oldprops(void);
+extern void update_rwho(void);
 
 /****************************************************************
  * Dump the database every so often.

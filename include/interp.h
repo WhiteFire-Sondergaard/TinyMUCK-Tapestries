@@ -8,8 +8,8 @@ typedef void * voidptr;
 #define MIPSCAST
 #endif
 extern const char *uppercase, *lowercase;
-#define UPCASE(x) (uppercase[x])
-#define DOWNCASE(x) (lowercase[x])
+#define UPCASE(x) (toupper((x)))
+#define DOWNCASE(x) (tolower((x))
 #ifdef COMPRESS
 extern const char *uncompress(const char *);
 extern const char *compress(const char *);
@@ -25,7 +25,7 @@ extern const char *compress(const char *);
   
 extern void RCLEAR(struct inst *oper, char *file, int line);
 #define CLEAR(oper) RCLEAR(oper, __FILE__, __LINE__)
-extern void push (struct inst *stack, int *top, int type, voidptr res);
+extern void push (struct inst *stack, int *top, int type, void *res);
 extern int valid_object(struct inst *oper);
   
 extern int false (struct inst *p);

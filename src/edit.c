@@ -81,14 +81,14 @@
 
 extern const char *lowercase, *uppercase;
 
-#define DOWNCASE(x) (lowercase[x])
+#define DOWNCASE(x) (tolower((x)))
 
 void    editor(dbref player, const char *command);
 void    do_insert(dbref player, dbref program, int arg[], int argc);
 void    do_delete(dbref player, dbref program, int arg[], int argc);
 void    do_quit(dbref player, dbref program);
 void    do_list(dbref player, dbref program, int arg[], int argc);
-void    insert(dbref player, const char *line);
+static void    insert(dbref player, const char *line);
 struct line *get_new_line(void);
 struct line *read_program(dbref i);
 void    do_compile(dbref player, dbref program);
@@ -761,7 +761,7 @@ toggle_numbers(dbref player)
 
 
 /* insert this line into program */
-void
+static void
 insert(dbref player, const char *line)
 {
     dbref   program;

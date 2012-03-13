@@ -350,7 +350,7 @@ addrout(long a, int prt, int myprt)
     }
 
     a = ntohl(a);
-    sprintf(tmpbuf, "%d.%d.%d.%d",
+    sprintf(tmpbuf, "%ld.%ld.%ld.%ld",
             (a >> 24) & 0xff,
             (a >> 16) & 0xff,
             (a >> 8)  & 0xff,
@@ -416,12 +416,9 @@ do_resolve()
 
 
 
-void 
+int 
 main(int argc, char **argv)
 {
-    int whatport;
-    FILE *ffd;
-
     if (argc > 1) {
 	fprintf(stderr, "Usage: %s\n", *argv);
 	exit(1);
@@ -434,7 +431,7 @@ main(int argc, char **argv)
     while(do_resolve());
     fprintf(stderr, "Resolver exited.\n");
 
-    exit(0);
+    return 0;
 }
 
 

@@ -72,7 +72,7 @@ SanPrint(dbref player, const char *format, ...)
 {
     va_list args;
     char buf[16384];
-    static san_linesprinted = 0;
+    static int san_linesprinted = 0;
 
     va_start(args, format);
 
@@ -477,8 +477,6 @@ check_exits_list(dbref player, dbref obj)
 void
 check_object(dbref player, dbref obj)
 {
-    int     i;
-
     /*
      * Do we have a name?
      */
@@ -1074,10 +1072,10 @@ sanfix(dbref player)
     if (player > NOTHING) {
 	if (!sanity_violated) {
 	    notify_nolisten(player, "Database repair complete, please re-run"
-	    " @sanity.  For details of repairs, check logs/sanfixed.");
+	    " @sanity.  For details of repairs, check logs/sanfixed.", FALSE);
 	} else {
 	    notify_nolisten(player, "Database repair complete, however the "
-	    "database is still corrupt.  Please re-run @sanity.");
+	    "database is still corrupt.  Please re-run @sanity.", FALSE);
 	}
     } else {
 	fprintf(stderr, "Database repair complete, ");
@@ -1256,11 +1254,6 @@ void
 extract_props_rec(FILE *f, dbref obj, const char *dir, PropPtr p)
 {
     char buf[BUFFER_LEN];
-    char *ptr;
-    const char *ptr2;
-    long tpos;
-    int flg;
-    short wastouched = 0;
 
     if (!p) return;
 
@@ -1435,9 +1428,7 @@ void extract_single(void)
 
 void hack_it_up(void)
 {
-    char buf[BUFFER_LEN];
     char *ptr;
-    int i;
     
     do
     {
@@ -1514,8 +1505,6 @@ void hack_it_up(void)
 void
 san_main(void)
 {
-    int     i;
-
     printf("\nEntering the Interactive Sanity DB editor.\n");
     printf("Good luck!\n\n");
 

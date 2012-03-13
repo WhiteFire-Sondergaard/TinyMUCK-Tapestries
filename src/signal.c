@@ -15,6 +15,7 @@
 #endif
 
 #include "config.h"
+#include "externs.h"
 
 #include <signal.h>
 
@@ -39,7 +40,7 @@ RETSIGTYPE sig_dump_status(int i);
 RETSIGTYPE sig_reap_resolver(int i);
 
 #ifdef _POSIX_VERSION
-void our_signal(int signo, void (*sighandler)());
+void our_signal(int signo, void (*sighandler)(int));
 #else
 # define our_signal(s,f) signal((s),(f))
 #endif
@@ -53,7 +54,7 @@ void our_signal(int signo, void (*sighandler)());
  * Calls sigaction() to set a signal, if we are posix.
  */
 #ifdef _POSIX_VERSION
-void our_signal(int signo, void (*sighandler)())
+void our_signal(int signo, void (*sighandler)(int))
 {
     struct sigaction	act, oact;
     
@@ -150,7 +151,6 @@ void set_signals(void)
 RETSIGTYPE bailout(int sig)
 {
     char    message[1024];
-    int	    i;
 
     /* turn off signals */
     set_sigs_intern(TRUE);

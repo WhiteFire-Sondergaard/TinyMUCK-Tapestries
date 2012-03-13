@@ -16,6 +16,7 @@ this is a standalone library.
 #include	<sys/types.h>
 #include	<sys/socket.h>
 #include	<netinet/in.h>
+#include	<arpa/inet.h>
 #include	<netdb.h>
 
 #define	DGRAMPORT		6888
@@ -83,7 +84,7 @@ rwhocli_setup(const char *server, const char *serverpw, const char *myname, cons
 	time(&senttime);
 
 	sprintf(pbuf,"U\t%.20s\t%.20s\t%.20s\t%.10d\t0\t%.25s",
-		localnam,password,localnam,senttime,comment);
+		localnam,password,localnam,(int)senttime,comment);
 	sendto(dgramfd,pbuf,strlen(pbuf),0,(SOCKADDRPTR)&addr,sizeof(addr));
 	return(0);
 }
@@ -121,7 +122,7 @@ rwhocli_pingalive()
 
 	if(dgramfd != -1) {
 		sprintf(pbuf,"M\t%.20s\t%.20s\t%.20s\t%.10d\t0\t%.25s",
-			localnam,password,localnam,senttime,lcomment);
+			localnam,password,localnam,(int)senttime,lcomment);
 		sendto(dgramfd,pbuf,strlen(pbuf),0,(SOCKADDRPTR)&addr,sizeof(addr));
 	}
 	return(0);
@@ -139,7 +140,7 @@ rwhocli_userlogin(const char *uid, const char *name, time_t tim)
 
 	if(dgramfd != -1) {
 		sprintf(pbuf,"A\t%.20s\t%.20s\t%.20s\t%.20s\t%.10d\t0\t%.20s",
-			localnam,password,localnam,uid,tim,name);
+			localnam,password,localnam,uid,(int)tim,name);
 		sendto(dgramfd,pbuf,strlen(pbuf),0,(SOCKADDRPTR)&addr,sizeof(addr));
 	}
 	return(0);

@@ -123,6 +123,7 @@
 #include "params.h"
 #include "tune.h"
 #include "props.h"
+#include "externs.h"
 
 extern int errno;
 int     shutdown_flag = 0;
@@ -184,40 +185,40 @@ extern int rwhocli_userlogout(const char *uid);
 
 void    process_commands(void);
 void    shovechars(int portc, int* portv);
-void    shutdownsock(struct descriptor_data * d);
-struct descriptor_data *initializesock(int s, const char *hostname);
+static void    shutdownsock(struct descriptor_data * d);
+static struct descriptor_data *initializesock(int s, const char *hostname);
 void    make_nonblocking(int s);
-void    freeqs(struct descriptor_data * d);
-void    welcome_user(struct descriptor_data * d);
-void    check_connect(struct descriptor_data * d, const char *msg);
+static void    freeqs(struct descriptor_data * d);
+static void    welcome_user(struct descriptor_data * d);
+static void    check_connect(struct descriptor_data * d, const char *msg);
 void    close_sockets(const char *msg);
 int     boot_off(dbref player);
 void    boot_player_off(dbref player);
 const char *addrout(long, unsigned short, unsigned short);
-void    dump_users(struct descriptor_data * d, char *user);
-struct descriptor_data *new_connection(int sock, int port);
+static void    dump_users(struct descriptor_data * d, char *user);
+static struct descriptor_data *new_connection(int sock, int port);
 void    parse_connect(const char *msg, char *command, char *user, char *pass);
 void    set_userstring(char **userstring, const char *command);
-int     do_command(struct descriptor_data * d, char *command);
+static int     do_command(struct descriptor_data * d, char *command);
 char   *strsave(const char *s);
 int     make_socket(int);
-int     queue_string(struct descriptor_data *, const char *);
-int     queue_write(struct descriptor_data *, const char *, int);
-int     process_output(struct descriptor_data * d);
-int     process_input(struct descriptor_data * d);
+static int     queue_string(struct descriptor_data *, const char *);
+static int     queue_write(struct descriptor_data *, const char *, int);
+static int     process_output(struct descriptor_data * d);
+static int     process_input(struct descriptor_data * d);
 void    announce_connect(dbref);
-void    announce_disconnect(struct descriptor_data *);
+static void    announce_disconnect(struct descriptor_data *);
 char   *time_format_1(long);
 char   *time_format_2(long);
 void    init_descriptor_lookup();
 void    init_descr_count_lookup();
-void    remember_descriptor(struct descriptor_data *);
+static void    remember_descriptor(struct descriptor_data *);
 void    remember_player_descr(dbref player, int);
 void    update_desc_count_table();
 void    forget_player_descr(dbref player, int);
-void    forget_descriptor(struct descriptor_data *);
-struct descriptor_data* descrdata_by_descr(int i);
-struct descriptor_data* lookup_descriptor(int);
+static void    forget_descriptor(struct descriptor_data *);
+static struct descriptor_data* descrdata_by_descr(int i);
+static struct descriptor_data* lookup_descriptor(int);
 int     online(dbref player);
 int     online_init();
 dbref   online_next(int *ptr);
@@ -808,7 +809,7 @@ long 	max_open_files(void)
 #endif /* !POSIX */
 }
 
-void 
+static void 
 goodbye_user(struct descriptor_data * d)
 {
     write(d->descriptor, "\r\n", 2);
@@ -816,7 +817,7 @@ goodbye_user(struct descriptor_data * d)
     write(d->descriptor, "\r\n\r\n", 4);
 }
 
-void
+static void
 idleboot_user(struct descriptor_data * d)
 {
     write(d->descriptor, "\r\n", 2);
@@ -1089,7 +1090,7 @@ wall_wizards(const char *msg)
 }
 
 
-struct descriptor_data *
+static struct descriptor_data *
 new_connection(int sock, int port)
 {
     int     newsock;
@@ -1273,7 +1274,7 @@ addrout(long a, unsigned short prt, unsigned short servport)
 }
 
 
-void 
+static void 
 clearstrings(struct descriptor_data * d)
 {
     if (d->output_prefix) {
@@ -1286,7 +1287,7 @@ clearstrings(struct descriptor_data * d)
     }
 }
 
-void 
+static void 
 shutdownsock(struct descriptor_data * d)
 {
     if (d->connected) {
@@ -1315,7 +1316,7 @@ shutdownsock(struct descriptor_data * d)
     log_status("CONCOUNT: There are now %d open connections.\n", ndescriptors);
 }
 
-struct descriptor_data *
+static struct descriptor_data *
 initializesock(int s, const char *hostname)
 {
     struct descriptor_data *d;
@@ -1410,7 +1411,7 @@ free_text_block(struct text_block * t)
     FREE((char *) t);
 }
 
-void 
+static void 
 add_to_queue(struct text_queue * q, const char *b, int n)
 {
     struct text_block *p;
@@ -1425,7 +1426,7 @@ add_to_queue(struct text_queue * q, const char *b, int n)
     q->lines++;
 }
 
-int 
+static int 
 flush_queue(struct text_queue * q, int n)
 {
     struct text_block *p;
@@ -1450,7 +1451,7 @@ flush_queue(struct text_queue * q, int n)
     return really_flushed;
 }
 
-int 
+static int 
 queue_write(struct descriptor_data * d, const char *b, int n)
 {
     int     space;
@@ -1463,13 +1464,13 @@ queue_write(struct descriptor_data * d, const char *b, int n)
     return n;
 }
 
-int 
+static int 
 queue_string(struct descriptor_data * d, const char *s)
 {
     return queue_write(d, s, strlen(s));
 }
 
-int 
+static int 
 process_output(struct descriptor_data * d)
 {
     struct text_block **qp, *cur;
@@ -1529,7 +1530,7 @@ make_nonblocking(int s)
     }
 }
 
-void 
+static void 
 freeqs(struct descriptor_data * d)
 {
     struct text_block *cur, *next;
@@ -1572,7 +1573,7 @@ strsave(const char *s)
     return p;
 }
 
-void 
+static void 
 save_command(struct descriptor_data * d, const char *command)
 {
     if (d->connected && !string_compare((char *) command, BREAK_COMMAND)) {
@@ -1585,7 +1586,7 @@ save_command(struct descriptor_data * d, const char *command)
     add_to_queue(&d->input, command, strlen(command) + 1);
 }
 
-int 
+static int 
 process_input(struct descriptor_data * d)
 {
     char    buf[MAX_COMMAND_LEN * 2];
@@ -1675,7 +1676,7 @@ process_commands(void)
     } while (nprocessed > 0);
 }
 
-int 
+static int 
 do_command(struct descriptor_data * d, char *command)
 {
     if (d->connected)
@@ -1747,7 +1748,7 @@ interact_warn(dbref player)
     }
 }
 
-void 
+static void 
 check_connect(struct descriptor_data * d, const char *msg)
 {
     char    command[MAX_COMMAND_LEN];
@@ -1833,6 +1834,21 @@ check_connect(struct descriptor_data * d, const char *msg)
 	    log_status("FAILED CREATE %s on descriptor %d\n",
 		       user, d->descriptor);
         }
+    } else if (!strncmp(command, "VERIFY", 6)) {
+        char msgbuf[BUFFER_LEN];
+
+	player = connect_player(user, password);
+	if (player == NOTHING) {
+	    strcpy(msgbuf, "VERIFICATION FAIL Invalid username or password.");
+	} else {
+	    if (strcmp(NAME(player), user) == 0)
+	        sprintf(msgbuf, "VERIFICATION OK #%ld", (long int)player);
+	    else
+	        strcpy(msgbuf, "VERIFICATION FAIL Verification requires correct upper and lower case in names.");
+	}
+	strcat(msgbuf, "\r\n");
+	queue_string(d, msgbuf);
+	d->booted = 1;
     } else {
 	welcome_user(d);
     }
@@ -1980,7 +1996,7 @@ emergency_shutdown(void)
 }
 
 
-void 
+static void 
 dump_users(struct descriptor_data * e, char *user)
 {
     struct descriptor_data *d;
@@ -2218,7 +2234,7 @@ announce_connect(dbref player)
     return;
 }
 
-void 
+static void 
 announce_disconnect(struct descriptor_data *d)
 {
     dbref   player = d->player;
@@ -2316,7 +2332,7 @@ update_desc_count_table()
     }
 }
 
-struct descriptor_data *
+static struct descriptor_data *
 descrdata_by_count(int c)
 {
     c--;
@@ -2387,7 +2403,7 @@ forget_player_descr(dbref player, int descr)
     DBFETCH(player)->sp.player.descrs = arr;
 }
 
-void
+static void
 remember_descriptor(struct descriptor_data *d)
 {
     if (d) {
@@ -2395,7 +2411,7 @@ remember_descriptor(struct descriptor_data *d)
     }
 }
 
-void
+static void
 forget_descriptor(struct descriptor_data *d)
 {
     if (d) {
@@ -2403,7 +2419,7 @@ forget_descriptor(struct descriptor_data *d)
     }
 }
 
-struct descriptor_data *
+static struct descriptor_data *
 lookup_descriptor(int c)
 {
     if (c >= FD_SETSIZE || c < 0) {
@@ -2412,7 +2428,7 @@ lookup_descriptor(int c)
     return descr_lookup_table[c];
 }
 
-struct descriptor_data *
+static struct descriptor_data *
 descrdata_by_descr(int i)
 {
     return lookup_descriptor(i);
@@ -2654,7 +2670,7 @@ update_rwho()
 }
 
 
-void 
+static void 
 welcome_user(struct descriptor_data * d)
 {
     FILE   *f;
