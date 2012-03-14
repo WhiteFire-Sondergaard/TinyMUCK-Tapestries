@@ -1591,9 +1591,9 @@ process_output(struct descriptor_data * d)
     {
         if (d->ssl) {
             cnt = BIO_write(io, cur->start, cur->nchars);
-            fprintf(stderr, "Write Returned: %d...\n", cnt);
+            // fprintf(stderr, "Write Returned: %d...\n", cnt);
             BIO_flush(io);
-            fprintf(stderr, "Flushed Output");
+            // fprintf(stderr, "Flushed Output");
         }
         else
 	    cnt = write(d->descriptor, cur->start, cur->nchars);
