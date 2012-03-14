@@ -156,7 +156,7 @@ struct text_queue {
 
 struct descriptor_data {
     int     descriptor;
-       SSL             *ssl;
+    SSL    *ssl;
     int     ssl_accepted;
     int     connected;
     int     booted;
@@ -175,7 +175,7 @@ struct descriptor_data {
     int     quota;
     struct descriptor_data *next;
     struct descriptor_data **prev;
-}      *descriptor_list = 0;
+} *descriptor_list = 0;
 
 struct socks {
        int     s;
@@ -852,16 +852,10 @@ long 	max_open_files(void)
 static void 
 goodbye_user(struct descriptor_data * d)
 {
-    BIO *io,*ssl_bio;
-
     if(d->ssl) {
-            io=BIO_new(BIO_f_buffer());
-            ssl_bio=BIO_new(BIO_f_ssl());
-            BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-            BIO_push(io, ssl_bio);
-            BIO_write(io, "\r\n", 2);
-            BIO_write(io, tp_leave_mesg, strlen(tp_leave_mesg));
-            BIO_write(io, "\r\n\r\n", 4);
+        SSL_write(d->ssl, "\r\n", 2);
+        SSL_write(d->ssl, tp_leave_mesg, strlen(tp_leave_mesg));
+        SSL_write(d->ssl, "\r\n\r\n", 4);
     } else {
         write(d->descriptor, "\r\n", 2);
         write(d->descriptor, tp_leave_mesg, strlen(tp_leave_mesg));
@@ -873,16 +867,10 @@ goodbye_user(struct descriptor_data * d)
 static void
 idleboot_user(struct descriptor_data * d)
 {
-    BIO *io,*ssl_bio;
-
     if(d->ssl) {
-            io=BIO_new(BIO_f_buffer());
-            ssl_bio=BIO_new(BIO_f_ssl());
-            BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-            BIO_push(io, ssl_bio);
-            BIO_write(io, "\r\n", 2);
-            BIO_write(io, tp_idle_mesg, strlen(tp_idle_mesg));
-            BIO_write(io, "\r\n\r\n", 4);
+            SSL_write(d->ssl, "\r\n", 2);
+            SSL_write(d->ssl, tp_idle_mesg, strlen(tp_idle_mesg));
+            SSL_write(d->ssl, "\r\n\r\n", 4);
     } else {
             write(d->descriptor, "\r\n", 2);
             write(d->descriptor, tp_idle_mesg, strlen(tp_idle_mesg));
@@ -1423,6 +1411,20 @@ clearstrings(struct descriptor_data * d)
     }
 }
 
+static void
+closesock(struct descriptor_data *d)
+{
+    if (d->ssl != NULL)
+    {
+	SSL_shutdown(d->ssl);
+	SSL_free(d->ssl);
+        close(d->descriptor);
+    } else {
+        shutdown(d->descriptor, 2);
+        close(d->descriptor);
+    }
+}
+
 static void 
 shutdownsock(struct descriptor_data * d)
 {
@@ -1439,13 +1441,7 @@ shutdownsock(struct descriptor_data * d)
                   d->descriptor, d->hostname, d->username);
     }
     clearstrings(d);
-    if (d->ssl != NULL)
-    {
-	SSL_free(d->ssl);
-    } else {
-        shutdown(d->descriptor, 2);
-        close(d->descriptor);
-    }
+    closesock(d);
     forget_descriptor(d);
     freeqs(d);
     *d->prev = d->next;
@@ -2123,30 +2119,17 @@ close_sockets(const char *msg)
 {
     struct descriptor_data *d, *dnext;
     int socknum;
-    BIO *io, *ssl_bio;
 
     for (d = descriptor_list; d; d = dnext) {
         dnext = d->next;
         if(d->ssl) {
-                io=BIO_new(BIO_f_buffer());
-                ssl_bio=BIO_new(BIO_f_ssl());
-                BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-                BIO_push(io, ssl_bio);
-                BIO_write(io, msg, strlen(msg));
-                BIO_write(io, shutdown_message, strlen(shutdown_message));
-                if (shutdown(d->descriptor, 2)<  0)
-                        perror("shutdown");
-                if(!SSL_shutdown(d->ssl))
-                        perror("shutdown");
-                SSL_free(d->ssl);
-                close(d->descriptor);
+                SSL_write(d->ssl, msg, strlen(msg));
+                SSL_write(d->ssl, shutdown_message, strlen(shutdown_message));
         } else {
                 write(d->descriptor, msg, strlen(msg));
                 write(d->descriptor, shutdown_message, strlen(shutdown_message));
-                if (shutdown(d->descriptor, 2)<  0)
-                        perror("shutdown");
-                close(d->descriptor);
         }
+	closesock(d);
         clearstrings(d);			/** added to clean up **/
         freeqs(d);				/****/
         *d->prev = d->next;			/****/
