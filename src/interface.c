@@ -157,6 +157,7 @@ struct text_queue {
 struct descriptor_data {
     int     descriptor;
        SSL             *ssl;
+    int     ssl_accepted;
     int     connected;
     int     booted;
     dbref   player;
@@ -1037,15 +1038,49 @@ shovechars(int portc, int* portv)
 #endif
 	    for (cnt = 0, d = descriptor_list; d; d = dnext) {
 		dnext = d->next;
-		if (FD_ISSET(d->descriptor, &input_set)) {
-		    d->last_time = now;
-		    if (!process_input(d)) {
-			d->booted = 1;
+		if (!d->ssl_accepted)
+		{
+		    if (FD_ISSET(d->descriptor, &input_set) 
+			|| FD_ISSET(d->descriptor, &output_set)) {
+			int ret = SSL_accept(d->ssl);
+			if (ret == 1)
+			{
+			    // Success!
+			    d->ssl_accepted = TRUE;
+			}
+			else if (ret == 0)
+			{
+			    // Negotiations failed
+			    d->booted = 1;
+			}
+			else
+			{
+			    switch(SSL_get_error(d->ssl, ret))
+			    {
+			    case SSL_ERROR_WANT_READ:
+			    case SSL_ERROR_WANT_WRITE:
+		    		break; // same as EWOULDBLOCK
+		
+			    default:
+		    		// FUUUUUuuuu!
+		    		// Need to close the connection...
+		    		d->booted = 1;
+			    }
+			}
 		    }
 		}
-		if (FD_ISSET(d->descriptor, &output_set)) {
-		    if (!process_output(d)) {
-			d->booted = 1;
+		else
+		{
+    		    if (FD_ISSET(d->descriptor, &input_set)) {
+		        d->last_time = now;
+		        if (!process_input(d)) {
+			    d->booted = 1;
+		        }
+		    }
+		    if (FD_ISSET(d->descriptor, &output_set)) {
+		        if (!process_output(d)) {
+			    d->booted = 1;
+		        }
 		    }
 		}
 		if (d->connected) {
@@ -1186,13 +1221,22 @@ new_connection(int sock, int port, int is_ssl)
 
         if (is_ssl) {
                 sbio = BIO_new_socket(newsock, BIO_NOCLOSE);
+		// Try and tell BIO that this is a nonblocking socket.
+		BIO_set_nbio(sbio, 1);
                 ssl = SSL_new(ctx);
+		// Prep socket for nonblocking
+		SSL_set_mode(ssl, 
+			SSL_MODE_ENABLE_PARTIAL_WRITE|
+			SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+
                 SSL_set_bio(ssl, sbio, sbio);
 
+		/* This is filled with fail. This will leak BIOs and SSLs.
                 if (SSL_accept(ssl)<=0) {
                         close(newsock);
                         return 0;
                 }
+		*/
         }
 
 	strcpy(hostname, addrout(addr.sin_addr.s_addr, addr.sin_port, port));
@@ -1387,13 +1431,21 @@ shutdownsock(struct descriptor_data * d)
                   d->descriptor, NAME(d->player), d->player,
                   d->hostname, d->username);
 	announce_disconnect(d);
+    } else if (d->ssl && !d->ssl_accepted) {
+       log_status("DISCONNECT: descriptor %d from %s(%s) SSL negotiations failed.\n",
+                  d->descriptor, d->hostname, d->username);
     } else {
        log_status("DISCONNECT: descriptor %d from %s(%s) never connected.\n",
                   d->descriptor, d->hostname, d->username);
     }
     clearstrings(d);
-    shutdown(d->descriptor, 2);
-    close(d->descriptor);
+    if (d->ssl != NULL)
+    {
+	SSL_free(d->ssl);
+    } else {
+        shutdown(d->descriptor, 2);
+        close(d->descriptor);
+    }
     forget_descriptor(d);
     freeqs(d);
     *d->prev = d->next;
@@ -1418,6 +1470,8 @@ initializesock(int s, const char *hostname, SSL *ssl)
     MALLOC(d, struct descriptor_data, 1);
     d->descriptor = s;
     d->ssl = ssl;
+    // For non-ssl sockets, set it to true. Otherwise, false.
+    d->ssl_accepted = (ssl == NULL);
     d->connected = 0;
     d->booted = 0;
     d->connected_at = current_systime;
@@ -1568,7 +1622,6 @@ process_output(struct descriptor_data * d)
 {
     struct text_block **qp, *cur;
     int     cnt;
-    BIO     *io = NULL, *ssl_bio;
 
     /* drastic, but this may give us crash test data */
     if (!d || !d->descriptor) {
@@ -1580,29 +1633,38 @@ process_output(struct descriptor_data * d)
         return 1;
     }
 
-    if (d->ssl) {
-            io=BIO_new(BIO_f_buffer());
-            ssl_bio=BIO_new(BIO_f_ssl());
-            BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-            BIO_push(io, ssl_bio);
-    }
-    
     for (qp = &d->output.head; (cur = *qp);)
     {
-        if (d->ssl) {
-            cnt = BIO_write(io, cur->start, cur->nchars);
-            // fprintf(stderr, "Write Returned: %d...\n", cnt);
-            BIO_flush(io);
-            // fprintf(stderr, "Flushed Output");
+        if (d->ssl) 
+	{
+            cnt = SSL_write(d->ssl, cur->start, cur->nchars);
+            if (cnt <= 0)
+	    {
+		switch(SSL_get_error(d->ssl, cnt))
+		{
+		case SSL_ERROR_WANT_READ:
+		case SSL_ERROR_WANT_WRITE:
+		    return 1; // same as EWOULDBLOCK
+		
+		default:
+		    // FUUUUUuuuu!
+		    // Need to close the connection...
+		    return 0;
+	        }
+	    }
+	    
         }
         else
+	{
 	    cnt = write(d->descriptor, cur->start, cur->nchars);
 
-	if (cnt < 0) {
-	    if (errno == EWOULDBLOCK)
-		return 1;
-	    return 0;
+    	    if (cnt < 0) {
+	        if (errno == EWOULDBLOCK)
+		    return 1;
+	        return 0;
+	    }
 	}
+
 	d->output_size -= cnt;
 	if (cnt == cur->nchars) {
 	    d->output.lines--;
@@ -1702,18 +1764,28 @@ process_input(struct descriptor_data * d)
     char    buf[MAX_COMMAND_LEN * 2];
     int     got;
     char    *p, *pend, *q, *qend;
-       BIO             *io, *ssl_bio;
 
-       if(d->ssl) {
-               io=BIO_new(BIO_f_buffer());
-               ssl_bio=BIO_new(BIO_f_ssl());
-               BIO_set_ssl(ssl_bio, d->ssl, BIO_CLOSE);
-               BIO_push(io, ssl_bio);
-               got = BIO_read(io, buf, sizeof buf);
-       } else
-    got = read(d->descriptor, buf, sizeof buf);
-    if (got <= 0)
-	return 0;
+    if(d->ssl) {
+        got = SSL_read(d->ssl, buf, sizeof buf);
+        if (got <= 0)
+        {
+	    switch(SSL_get_error(d->ssl, got))
+	    {
+	    case SSL_ERROR_WANT_READ:
+	    case SSL_ERROR_WANT_WRITE:
+	        return 1; // same as EWOULDBLOCK
+		
+	    default:
+	        // FUUUUUuuuu!
+	        // Need to close the connection...
+	        return 0;
+	    }
+        }
+    } else {
+        got = read(d->descriptor, buf, sizeof buf);
+        if (got <= 0)
+            return 0; // OI error, kick them off!
+    }
     if (!d->raw_input) {
 	MALLOC(d->raw_input, char, MAX_COMMAND_LEN);
 	d->raw_input_at = d->raw_input;
