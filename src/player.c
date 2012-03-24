@@ -47,6 +47,12 @@
 #include "interface.h"
 #include "externs.h"
 
+#include <xcrypt.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 static hash_tab player_list[PLAYER_HASH_SIZE];
 
 dbref 
@@ -66,18 +72,20 @@ connect_player(const char *name, const char *password)
     dbref   player;
 
     if (*name == '#' && number(name+1) && atoi(name+1)) {
-	player = (dbref) atoi(name + 1);
-	if ((player < 0) || (player >= db_top) || (Typeof(player) != TYPE_PLAYER))
-	    player = NOTHING;
+       player = (dbref) atoi(name + 1);
+       if ((player < 0) || (player >= db_top) || (Typeof(player) != TYPE_PLAYER))
+           player = NOTHING;
     } else {
-	player = lookup_player(name);
+       player = lookup_player(name);
     }
+
     if (player == NOTHING)
-	return NOTHING;
+       return NOTHING;
+
     if (DBFETCH(player)->sp.player.password
-	    && *DBFETCH(player)->sp.player.password
-	    && strcmp(DBFETCH(player)->sp.player.password, password))
-	return NOTHING;
+       && *DBFETCH(player)->sp.player.password
+       && !check_password(player, password))
+        return NOTHING;
 
     return player;
 }
@@ -101,7 +109,7 @@ create_player(const char *name, const char *password)
     DBFETCH(player)->sp.player.home = tp_player_start;
     DBFETCH(player)->exits = NOTHING;
     DBFETCH(player)->sp.player.pennies = tp_start_pennies;
-    DBFETCH(player)->sp.player.password = alloc_string(password);
+    DBFETCH(player)->sp.player.password = NULL; // handle this last
     DBFETCH(player)->sp.player.curr_prog = NOTHING;
     DBFETCH(player)->sp.player.insert_mode = 0;
 
@@ -110,6 +118,7 @@ create_player(const char *name, const char *password)
     add_player(player);
     DBDIRTY(player);
     DBDIRTY(tp_player_start);
+    set_password(player, password);
 
     return player;
 }
@@ -117,14 +126,16 @@ create_player(const char *name, const char *password)
 void 
 do_password(dbref player, const char *old, const char *newobj)
 {
-    if (!DBFETCH(player)->sp.player.password || strcmp(old, DBFETCH(player)->sp.player.password)) {
-	notify(player, "Sorry");
-    } else if (!ok_password(newobj)) {
-	notify(player, "Bad new password.");
+    if (!check_password(player, old)) 
+    {
+       notify(player, "Sorry");
+    } 
+    else if (!ok_password(newobj)) 
+    {
+       notify(player, "Bad new password.");
     } else {
-	free((void *) DBFETCH(player)->sp.player.password);
-	DBSTORE(player, sp.player.password, alloc_string(newobj));
-	notify(player, "Password changed.");
+       set_password(player, newobj);
+       notify(player, "Password changed.");
     }
 }
 
@@ -147,6 +158,45 @@ add_player(dbref who)
 	return;
 }
 
+// Assumes player is valid
+int
+check_password(dbref player, const char *password)
+{
+    const char *p = DBFETCH(player)->sp.player.password; // Fetch the password
+
+    // No password? Never true.
+    if (!p) return FALSE;
+
+    // Hash the password and compare hashes
+    if (strcmp(xcrypt(password, p), p) == 0) return TRUE;
+
+    return FALSE;
+}
+
+// Assumes player is valid, assumes password has been checked by ok_password
+void
+set_password(dbref player, const char *password)
+{
+    char entropy[16];
+    char *newhash;
+    int fd;
+
+    // Get sone entropy
+    fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) { printf("Can't open /dev/urandom\n"); abort(); };
+    if (read(fd, entropy, sizeof(entropy)) != sizeof(entropy)) { printf("Not enough entropy in the universe."); abort(); };
+    close(fd);
+
+    // Make the hash 
+    newhash = xcrypt(password, xcrypt_gensalt("$2a$", 12, entropy, sizeof(entropy)));
+
+    // Trash the old password
+    if (DBFETCH(player)->sp.player.password)
+        free((void *) DBFETCH(player)->sp.player.password);
+
+    // Set the password
+    DBSTORE(player, sp.player.password, alloc_string(newhash));
+}
 
 void 
 delete_player(dbref who)

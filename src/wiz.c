@@ -703,9 +703,11 @@ do_newpassword(dbref player, const char *name, const char *password)
 #endif				/* GOD_PRIV */
 
 	/* it's ok, do it */
-	if (DBFETCH(victim)->sp.player.password)
-	    free((void *) DBFETCH(victim)->sp.player.password);
-	DBSTORE(victim, sp.player.password, alloc_string(password));
+	// if (DBFETCH(victim)->sp.player.password)
+	//     free((void *) DBFETCH(victim)->sp.player.password);
+	// DBSTORE(victim, sp.player.password, alloc_string(password));
+    set_password(victim, password);
+
 	notify(player, "Password changed.");
 	sprintf(buf, "Your password has been changed by %s.", NAME(player));
 	notify(victim, buf);
