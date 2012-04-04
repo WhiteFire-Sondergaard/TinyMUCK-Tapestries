@@ -1948,8 +1948,8 @@ check_connect(struct descriptor_data * d, const char *msg)
 	player = connect_player(user, password);
 	if (player == NOTHING) {
 	    queue_string(d, connect_fail);
-	    log_status("FAILED CONNECT %s on descriptor %d\n",
-		       user, d->descriptor);
+	    log_status("FAILED CONNECT %s on descriptor %d host %s\n",
+		       user, d->descriptor, d->hostname);
 	} else {
 	    if ((wizonly_mode ||
 	         (tp_playermax && con_players_curr >= tp_playermax_limit)) &&
