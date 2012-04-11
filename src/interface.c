@@ -171,6 +171,7 @@ struct descriptor_data {
     long    last_time;
     long    connected_at;
     const char *hostname;
+    const char *ip_address;
     const char *username;
     int     quota;
     struct descriptor_data *next;
@@ -1491,6 +1492,7 @@ initializesock(int s, const char *hostname, SSL *ssl)
     ptr=index(buf,'(');
     *ptr++='\0';
     d->hostname = alloc_string(buf);
+    d->ip_address = alloc_string(buf);
     d->username = alloc_string(ptr);
     if (descriptor_list)
 	descriptor_list->prev = &d->next;
@@ -1948,8 +1950,8 @@ check_connect(struct descriptor_data * d, const char *msg)
 	player = connect_player(user, password);
 	if (player == NOTHING) {
 	    queue_string(d, connect_fail);
-	    log_status("FAILED CONNECT %s on descriptor %d host %s\n",
-		       user, d->descriptor, d->hostname);
+	    log_status("FAILED CONNECT %s on descriptor %d IP %s\n",
+		       user, d->descriptor, d->ip_address);
 	} else {
 	    if ((wizonly_mode ||
 	         (tp_playermax && con_players_curr >= tp_playermax_limit)) &&
@@ -2135,8 +2137,10 @@ close_sockets(const char *msg)
         *d->prev = d->next;			/****/
         if (d->next)				/****/
             d->next->prev = d->prev;		/****/
-	if (d->hostname)                        /****/
-	    free((void *)d->hostname);          /****/
+    if (d->hostname)                        /****/
+        free((void *)d->hostname);          /****/
+    if (d->ip_address)                        /****/
+        free((void *)d->ip_address);          /****/
         if (d->username)                        /****/
             free((void *)d->username);          /****/
         FREE(d);				/****/
