@@ -345,6 +345,8 @@ void do_password(dbref player, const char *old, const char *newobj);
 void clear_players(void);
 void add_player(dbref who);
 void delete_player(dbref who);
+void set_password(dbref player, const char *password);
+int check_password(dbref player, const char *password);
 /* predicates.c */
 int can_link_to(dbref who, object_flag_type what_type, dbref where);
 int can_link(dbref who, dbref what);
