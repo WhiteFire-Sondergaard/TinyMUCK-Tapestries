@@ -50,6 +50,7 @@ module FuzzBallDB
    TYPE_MASK = 0x7
 
    class MuObject
+
       def initialize(dbref)
          def db_readline(echo = true) 
             FuzzBallDB::db_readline(echo)
@@ -65,6 +66,7 @@ module FuzzBallDB
          @lastused = db_readline.to_i
          @usecount = db_readline.to_i
          @modified = db_readline.to_i
+         @num_converted = 0
 
          # Skip properties
          # puts "Properties..."
@@ -111,6 +113,7 @@ module FuzzBallDB
             if cache[key]
                @password = cache[key]
             else
+               FuzzBallDB::inc_converted()
                @password = BCrypt::Password.create(@password, :cost => BCRYPT_COST)
                cache[key] = @password
             end
@@ -119,6 +122,10 @@ module FuzzBallDB
             # End Magic
          end # case
       end
+   end
+
+   def self.inc_converted()
+      @@converted += 1
    end
 
    def self.db_readline(echo = true)
@@ -139,6 +146,8 @@ module FuzzBallDB
 
       @@db = db
       @@output = output
+      @@converted = 0
+
       if File.exist?(cache)
          puts "Loading cache."
          @@cache = JSON.parse(File.new(cache, "r").read)
@@ -186,6 +195,7 @@ module FuzzBallDB
 
       puts "Saving Cache..."
       File.open(cache, "w").write(@@cache.to_json)
+      puts "Number converted this round #{@@converted}."
    end
 
 end
