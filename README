@@ -1,0 +1,9 @@
+This is the TinyMUCK server that Tapestries MUCK uses. It is based on the TinyMUCK FB server.
+
+Copyrights and Licenses vary from public domain to GPL. Please see individual files for more information.
+
+This version of the server is expected to be end of lifed for a new one in not quite near future. It is posted here to build in Lua to the Muck and a new security system for a transition period before the new server is complete.
+
+If you are trying to build this on anything other than a fairly modern Linux box, may god have mercy on your soul.
+
+-- WhiteWizard
