@@ -8,4 +8,6 @@ If you are trying to build this on anything other than a fairly modern Linux box
 
 There is no github Wiki because Tapestries has it's own wiki, see https://www.fur.com/tapestries .
 
+./configure is BROKEN. It will ruin your Makefile at the very least. It's not been updated in years. Feel free to fix this. :3
+
 -- WhiteWizard
