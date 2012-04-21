@@ -3004,6 +3004,9 @@ dump_mssp(struct descriptor_data * d)
 	}
 
 	queue_string(d, "MSSP-REPLY-END\r\n");
+
+	log_status("MSSP: request on descriptor %d from %s(%s) filled.\n",
+                  d->descriptor, d->hostname, d->username);
 }
 
 void dump_status()
