@@ -21,18 +21,30 @@
 
 #define TQ_MUF_TYP 0
 #define TQ_MPI_TYP 1
+#define TQ_LUA_TYP 2
 
-#define TQ_MUF_QUEUE    0x0
-#define TQ_MUF_DELAY    0x1
-#define TQ_MUF_LISTEN   0x2
-#define TQ_MUF_READ     0x3
+#define TQ_QUEUE    0x0
+#define TQ_DELAY    0x1
+#define TQ_LISTEN   0x2
+#define TQ_READ     0x3
+#define TQ_SUBMASK  0x7
+#define TQ_LISTEN   0x8
+#define TQ_OMESG   0x10
+
+/*
+ * Legacy, please use the above.
+ */
+#define TQ_MUF_QUEUE    TQ_QUEUE
+#define TQ_MUF_DELAY    TQ_DELAY
+#define TQ_MUF_LISTEN   TQ_LISTEN
+#define TQ_MUF_READ     TQ_READ
  
-#define TQ_MPI_QUEUE    0x0
-#define TQ_MPI_DELAY    0x1
+#define TQ_MPI_QUEUE    TQ_QUEUE
+#define TQ_MPI_DELAY    TQ_DELAY
 
-#define TQ_MPI_SUBMASK  0x7
-#define TQ_MPI_LISTEN   0x8
-#define TQ_MPI_OMESG   0x10
+#define TQ_MPI_SUBMASK  TQ_SUBMASK
+#define TQ_MPI_LISTEN   TQ_LISTEN
+#define TQ_MPI_OMESG    TQ_OMESG
 
 
 /*
