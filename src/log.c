@@ -91,8 +91,8 @@ log_status(char *format,...)
 	fprintf(stderr, "%.16s: ", ctime(&lt));
 	vfprintf(stderr, format, args);
     } else {
-        format_time(buf, 32, "%c", localtime(&lt));
-	fprintf(fp, "%.32s: ", buf);
+        format_time(buf, 32, "%Y-%m-%dT%H:%M:%S", localtime(&lt));
+	fprintf(fp, "%.32s ", buf);
 	vfprintf(fp, format, args);
 	fclose(fp);
     }
@@ -150,8 +150,8 @@ log_gripe(char *format,...)
 	fprintf(stderr, "%.16s: ", ctime(&lt));
 	vfprintf(stderr, format, args);
     } else {
-        format_time(buf, 32, "%c", localtime(&lt));
-	fprintf(fp, "%.32s: ", buf);
+        format_time(buf, 32, "%Y-%m-%dT%H:%M:%S", localtime(&lt));
+	fprintf(fp, "%.32s ", buf);
 	vfprintf(fp, format, args);
 	fclose(fp);
     }
@@ -174,8 +174,8 @@ log_command(char *format,...)
 	fprintf(stderr, "Unable to open %s!\n", COMMAND_LOG);
 	vfprintf(stderr, format, args);
     } else {
-        format_time(buf, 32, "%c", localtime(&lt));
-	fprintf(fp, "%.32s: ", buf);
+        format_time(buf, 32, "%Y-%m-%dT%H:%M:%S", localtime(&lt));
+	fprintf(fp, "%.32s ", buf);
 	vfprintf(fp, format, args);
 	fclose(fp);
     }

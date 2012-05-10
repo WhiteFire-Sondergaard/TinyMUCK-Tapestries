@@ -405,7 +405,7 @@ prim_setname(PRIM_PROTOTYPE)
 	    /* check for null password */
 	    if (!*password) {
 		abort_interp("Player namechange requires password.");
-	    } else if (strcmp(password, DoNull(DBFETCH(ref)->sp.player.password))) {
+	    } else if (!check_password(ref, password)) {
 		abort_interp("Incorrect password.");
 	    } else if (string_compare(b, NAME(ref))
 		       && !ok_player_name(b)) {
@@ -1359,7 +1359,7 @@ prim_checkpassword(PRIM_PROTOTYPE)
     if (oper2->type != PROG_STRING)
        abort_interp("Password string expected. (2)");
     ptr = oper2->data.string? oper2->data.string->data : "";
-    if (ref != NOTHING && !strcmp(ptr, DBFETCH(ref)->sp.player.password))
+    if (ref != NOTHING && check_password(ref, ptr))
        result=1;
     else
        result=0;

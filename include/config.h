@@ -104,6 +104,7 @@
    Where the system looks for its datafiles.
  ************************************************************************/
 #define WELC_FILE "data/welcome.txt" /* For the opening screen      */
+#define MSSP_FILE "data/mssp.txt"    /* For the MSSP format         */
 #define MOTD_FILE "data/motd.txt"    /* For the message of the day  */
 
 #define HELP_FILE "data/help.txt"    /* For the 'help' command      */

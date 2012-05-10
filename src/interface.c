@@ -171,6 +171,7 @@ struct descriptor_data {
     long    last_time;
     long    connected_at;
     const char *hostname;
+    const char *ip_address;
     const char *username;
     int     quota;
     struct descriptor_data *next;
@@ -208,6 +209,7 @@ int     boot_off(dbref player);
 void    boot_player_off(dbref player);
 const char *addrout(long, unsigned short, unsigned short);
 static void    dump_users(struct descriptor_data * d, char *user);
+static void dump_mssp(struct descriptor_data * d);
 static struct descriptor_data *new_connection(int sock, int port, int is_ssl);
 void    parse_connect(const char *msg, char *command, char *user, char *pass);
 void    set_userstring(char **userstring, const char *command);
@@ -1491,6 +1493,7 @@ initializesock(int s, const char *hostname, SSL *ssl)
     ptr=index(buf,'(');
     *ptr++='\0';
     d->hostname = alloc_string(buf);
+    d->ip_address = alloc_string(buf);
     d->username = alloc_string(ptr);
     if (descriptor_list)
 	descriptor_list->prev = &d->next;
@@ -1865,57 +1868,65 @@ process_commands(void)
 static int 
 do_command(struct descriptor_data * d, char *command)
 {
-    if (d->connected)
-	ts_lastuseobject(d->player);
-    if (!strcmp(command, QUIT_COMMAND)) {
-	return 0;
-    } else if (!strncmp(command, WHO_COMMAND, sizeof(WHO_COMMAND) - 1)) {
-	char buf[BUFFER_LEN];
-	if (d->output_prefix) {
-	    queue_string(d, d->output_prefix);
-	    queue_write(d, "\r\n", 2);
+	if (d->connected)
+		ts_lastuseobject(d->player);
+	
+	if (!strcmp(command, QUIT_COMMAND)) 
+		return 0;
+	
+	if (!d->connected && !strcmp(command, "MSSP-REQUEST"))
+	{
+		dump_mssp(d);
+		return 1;
 	}
-	strcpy(buf, "@");
-	strcat(buf, WHO_COMMAND);
-	strcat(buf, " ");
-	strcat(buf, command + sizeof(WHO_COMMAND) - 1);
-	if (!d->connected || (FLAGS(d->player) & INTERACTIVE)) {
-	    if (tp_secure_who) {
-		queue_string(d,"Sorry, WHO is unavailable at this point.\r\n");
-	    } else {
-		dump_users(d, command + sizeof(WHO_COMMAND) - 1);
-	    }
+
+	if (!strncmp(command, WHO_COMMAND, sizeof(WHO_COMMAND) - 1)) {
+		char buf[BUFFER_LEN];
+		if (d->output_prefix) {
+			queue_string(d, d->output_prefix);
+			queue_write(d, "\r\n", 2);
+		}
+		strcpy(buf, "@");
+		strcat(buf, WHO_COMMAND);
+		strcat(buf, " ");
+		strcat(buf, command + sizeof(WHO_COMMAND) - 1);
+		if (!d->connected || (FLAGS(d->player) & INTERACTIVE)) {
+			if (tp_secure_who) {
+				queue_string(d,"Sorry, WHO is unavailable at this point.\r\n");
+			} else {
+				dump_users(d, command + sizeof(WHO_COMMAND) - 1);
+			}
+		} else {
+			if (can_move(d->player, buf, 2)) {
+				do_move(d->player, buf, 2);
+			} else {
+				dump_users(d, command + sizeof(WHO_COMMAND) - 1);
+			}
+		}
+		if (d->output_suffix) {
+			queue_string(d, d->output_suffix);
+			queue_write(d, "\r\n", 2);
+		}
+	} else if (!strncmp(command, PREFIX_COMMAND, sizeof(PREFIX_COMMAND) - 1)) {
+		set_userstring(&d->output_prefix, command + sizeof(PREFIX_COMMAND) - 1);
+	} else if (!strncmp(command, SUFFIX_COMMAND, sizeof(SUFFIX_COMMAND) - 1)) {
+		set_userstring(&d->output_suffix, command + sizeof(SUFFIX_COMMAND) - 1);
 	} else {
-	    if (can_move(d->player, buf, 2)) {
-		do_move(d->player, buf, 2);
-	    } else {
-		dump_users(d, command + sizeof(WHO_COMMAND) - 1);
-	    }
+		if (d->connected) {
+			if (d->output_prefix) {
+				queue_string(d, d->output_prefix);
+				queue_write(d, "\r\n", 2);
+			}
+			process_command(d->player, command);
+			if (d->output_suffix) {
+				queue_string(d, d->output_suffix);
+				queue_write(d, "\r\n", 2);
+			}
+		} else {
+			check_connect(d, command);
+		}
 	}
-	if (d->output_suffix) {
-	    queue_string(d, d->output_suffix);
-	    queue_write(d, "\r\n", 2);
-	}
-    } else if (!strncmp(command, PREFIX_COMMAND, sizeof(PREFIX_COMMAND) - 1)) {
-	set_userstring(&d->output_prefix, command + sizeof(PREFIX_COMMAND) - 1);
-    } else if (!strncmp(command, SUFFIX_COMMAND, sizeof(SUFFIX_COMMAND) - 1)) {
-	set_userstring(&d->output_suffix, command + sizeof(SUFFIX_COMMAND) - 1);
-    } else {
-	if (d->connected) {
-	    if (d->output_prefix) {
-		queue_string(d, d->output_prefix);
-		queue_write(d, "\r\n", 2);
-	    }
-	    process_command(d->player, command);
-	    if (d->output_suffix) {
-		queue_string(d, d->output_suffix);
-		queue_write(d, "\r\n", 2);
-	    }
-	} else {
-	    check_connect(d, command);
-	}
-    }
-    return 1;
+	return 1;
 }
 
 void 
@@ -1948,8 +1959,8 @@ check_connect(struct descriptor_data * d, const char *msg)
 	player = connect_player(user, password);
 	if (player == NOTHING) {
 	    queue_string(d, connect_fail);
-	    log_status("FAILED CONNECT %s on descriptor %d\n",
-		       user, d->descriptor);
+	    log_status("FAILED CONNECT %s on descriptor %d IP %s\n",
+		       user, d->descriptor, d->ip_address);
 	} else {
 	    if ((wizonly_mode ||
 	         (tp_playermax && con_players_curr >= tp_playermax_limit)) &&
@@ -2135,8 +2146,10 @@ close_sockets(const char *msg)
         *d->prev = d->next;			/****/
         if (d->next)				/****/
             d->next->prev = d->prev;		/****/
-	if (d->hostname)                        /****/
-	    free((void *)d->hostname);          /****/
+    if (d->hostname)                        /****/
+        free((void *)d->hostname);          /****/
+    if (d->ip_address)                        /****/
+        free((void *)d->ip_address);          /****/
         if (d->username)                        /****/
             free((void *)d->username);          /****/
         FREE(d);				/****/
@@ -2889,6 +2902,111 @@ welcome_user(struct descriptor_data * d)
 	    queue_string(d, "\r\n");
 	}
     }
+}
+
+static void
+dump_mssp(struct descriptor_data * d)
+{
+	FILE   *f;
+	char    buf[BUFFER_LEN];
+	int 	i;
+	char   *ptr;
+
+	// for stats
+	int     rooms;
+	int     exits;
+	int     things;
+	int     players;
+	int     programs;
+	int     garbage = 0;
+	int     total;
+	time_t 	uptime = (time_t)get_property_value(0,"_sys/startuptime");
+
+	// Get stats
+	for (i = 0; i < db_top; i++) {
+
+		switch (Typeof(i)) {
+			case TYPE_ROOM:
+			total++;
+			rooms++;
+			break;
+			case TYPE_EXIT:
+			total++;
+			exits++;
+			break;
+			case TYPE_THING:
+			total++;
+			things++;
+			break;
+			case TYPE_PLAYER:
+			total++;
+			players++;
+			break;
+			case TYPE_PROGRAM:
+			total++;
+			programs++;
+			break;
+			case TYPE_GARBAGE:
+			// total++; // Reporting garbage as part of the DB size is lame
+			garbage++;
+			break;
+		}
+	}
+
+	// Start the reply.
+	queue_string(d, "\r\nMSSP-REPLY-START\r\n");
+
+	// Non-static stuff.
+	sprintf(buf, "CODEBASE\t%s\r\n", VERSION);
+	queue_string(d, buf);
+	
+	sprintf(buf, "DBSIZE\t%d\r\n", total);
+	queue_string(d, buf);
+
+	sprintf(buf, "PLAYERS\t%d\r\n", players);
+	queue_string(d, buf);
+
+	sprintf(buf, "OBJECTS\t%d\r\n", things);
+	queue_string(d, buf);
+
+	sprintf(buf, "ROOMS\t%d\r\n", rooms);
+	queue_string(d, buf);
+
+	// Not sure what they mean by "areas"
+	// sprintf(buff, "AREAS\t%d\r\n", ?);
+	// queue_string(d, buf);
+
+	sprintf(buf, "EXITS\t%d\r\n", exits);
+	queue_string(d, buf);
+
+	sprintf(buf, "UPTIME\t%d\r\n", (unsigned int)uptime);
+	queue_string(d, buf);
+
+	// Dump static stuff from a file
+	if ((f = fopen(MSSP_FILE, "r")) == NULL) 
+	{
+		perror("spit_file: mssp.txt");
+	} 
+	else 
+	{
+		while (fgets(buf, sizeof buf, f)) 
+		{
+			ptr = index(buf, '\n');
+			if (ptr && ptr > buf && *(ptr-1) != '\r') 
+			{
+				*ptr++ = '\r';
+				*ptr++ = '\n';
+				*ptr++ = '\0';
+			}
+			queue_string(d, buf);
+		}
+		fclose(f);
+	}
+
+	queue_string(d, "MSSP-REPLY-END\r\n");
+
+	log_status("MSSP: request on descriptor %d from %s(%s) filled.\n",
+                  d->descriptor, d->hostname, d->username);
 }
 
 void dump_status()
