@@ -34,6 +34,10 @@ ROOT= ..
 
 # Where the include files are
 INCLUDE= ${ROOT}/include
+LUA_INCLUDE= ${ROOT}/lua-5.2.0/src
+
+# Where the lua libraries are
+LUA_LIB= ${ROOT}/lua-5.2.0/src
 
 # Destination for binaries
 DEST=${ROOT}/bin
@@ -43,7 +47,7 @@ DEST=${ROOT}/bin
 # #######################################################################
 CC=gcc
 DEFS=-DHAVE_CONFIG_H
-LIBR= -lm -lnsl -lssl -lxcrypt
+LIBR= -lm -lnsl -lssl -lxcrypt -L${LUA_LIB} -llua
 
 # #######################################################################
 #  	   Usualy don't need to change anything past here.
@@ -52,7 +56,7 @@ LIBR= -lm -lnsl -lssl -lxcrypt
 #
 # Include path, Cflags...
 #
-CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE}
+CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE} -I${LUA_INCLUDE}
 
 #
 # for saving old copies.
