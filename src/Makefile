@@ -23,7 +23,7 @@
 #			alwase "strip netmuck" if you want the space.
 # -Wall -pedantic	Good way to get spammed with warnings from GCC.
 #
-OPTIM= -O -g
+OPTIM= -O -g -Wno-write-strings
 
 #
 # Paths
@@ -45,7 +45,7 @@ DEST=${ROOT}/bin
 # #######################################################################
 # 		Variables set by the configure script.
 # #######################################################################
-CC=gcc
+CC=g++
 DEFS=-DHAVE_CONFIG_H
 LIBR= -lm -lnsl -lssl -lxcrypt -L${LUA_LIB} -llua
 

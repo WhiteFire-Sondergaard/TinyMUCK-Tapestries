@@ -159,40 +159,40 @@ list_top_4k_words()
 struct queue_node *
 queue_add_node(const char *word, int pri)
 {
-    struct queue_node *new;
+    struct queue_node *newqn;
     hash_data hd;
 
-    new = (struct queue_node *)malloc(sizeof(struct queue_node));
-    if (!new) abort();
+    newqn = (struct queue_node *)malloc(sizeof(struct queue_node));
+    if (!newqn) abort();
 
     if (!head) {
-        head = new;
-        new->prev = NULL;
+        head = newqn;
+        newqn->prev = NULL;
     }
-    new->next = NULL;
-    new->prev = tail;
+    newqn->next = NULL;
+    newqn->prev = tail;
     if (tail) {
-        tail->next = new;
+        tail->next = newqn;
     }
-    tail = new;
-    new->count = 0;
-    new->spcount = 0;
-    strcpy(new->word, word);
-    new->len = strlen(new->word);
-    if (new->word[new->len - 1] == ' ') {
-        new->word[new->len - 1] = '\0';
-        new->len--;
-        new->spcount += pri;
+    tail = newqn;
+    newqn->count = 0;
+    newqn->spcount = 0;
+    strcpy(newqn->word, word);
+    newqn->len = strlen(newqn->word);
+    if (newqn->word[newqn->len - 1] == ' ') {
+        newqn->word[newqn->len - 1] = '\0';
+        newqn->len--;
+        newqn->spcount += pri;
     } else {
-        new->count += pri;
+        newqn->count += pri;
     }
-    new->val = 0;
-    queue_promote(new);
+    newqn->val = 0;
+    queue_promote(newqn);
 
-    hd.pval = (void *)new;
-    (void) add_hash(new->word, hd, wordhash, WORD_HASH_SIZE);
+    hd.pval = (void *)newqn;
+    (void) add_hash(newqn->word, hd, wordhash, WORD_HASH_SIZE);
 
-    return new;
+    return newqn;
 }
 
 void

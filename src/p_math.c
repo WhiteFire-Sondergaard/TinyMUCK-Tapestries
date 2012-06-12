@@ -196,7 +196,7 @@ prim_and(PRIM_PROTOTYPE)
     CHECKOP(2);
     oper1 = POP();
     oper2 = POP();
-    result = !false(oper1) && !false(oper2);
+    result = !muf_false(oper1) && !muf_false(oper2);
     CLEAR(oper1);
     CLEAR(oper2);
     PushInt(result);
@@ -208,7 +208,7 @@ prim_or(PRIM_PROTOTYPE)
     CHECKOP(2);
     oper1 = POP();
     oper2 = POP();
-    result = !false(oper1) || !false(oper2);
+    result = !muf_false(oper1) || !muf_false(oper2);
     CLEAR(oper1);
     CLEAR(oper2);
     PushInt(result);
@@ -219,7 +219,7 @@ prim_not(PRIM_PROTOTYPE)
 {
     CHECKOP(1);
     oper1 = POP();
-    result = false(oper1);
+    result = muf_false(oper1);
     CLEAR(oper1);
     PushInt(result);
 }

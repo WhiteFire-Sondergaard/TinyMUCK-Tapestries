@@ -155,7 +155,7 @@ copy_bool(struct boolexp * old)
 	    }
 	    break;
 	default:
-	    log_status("PANIC: copy_boolexp: Error in boolexp!\n");
+	    log_status((char *)"PANIC: copy_boolexp: Error in boolexp!\n");
 	    abort();
     }
     return o;
@@ -419,7 +419,7 @@ static struct boolexp *
 parse_boolprop(char *buf)
 {
     char   *type = alloc_string(buf);
-    char   *class = (char *) index(type, PROP_DELIMITER);
+    char   *d_class = (char *) index(type, PROP_DELIMITER);
     char   *x;
     struct boolexp *b;
     PropPtr p;
@@ -438,24 +438,24 @@ parse_boolprop(char *buf)
 	return TRUE_BOOLEXP;
     }
     /* get rid of trailing spaces */
-    for (temp = class - 1; isspace(*temp); temp--);
+    for (temp = d_class - 1; isspace(*temp); temp--);
     temp++;
     *temp = '\0';
-    class++;
-    while (isspace(*class) && *class)
-	class++;
-    if (!*class) {
+    d_class++;
+    while (isspace(*d_class) && *d_class)
+	d_class++;
+    if (!*d_class) {
 	/* Oops!  CLEAN UP AND RETURN A TRUE */
 	free((void *) x);
 	free_boolnode(b);
 	return TRUE_BOOLEXP;
     }
     /* get rid of trailing spaces */
-    for (temp = class; !isspace(*temp) && *temp; temp++);
+    for (temp = d_class; !isspace(*temp) && *temp; temp++);
     *temp = '\0';
 
     b->prop_check = p = alloc_propnode(type);
-    SetPDataStr(p, alloc_string(class));
+    SetPDataStr(p, alloc_string(d_class));
     SetPType(p, PROP_STRTYP);
     free((void *) x);
     return b;

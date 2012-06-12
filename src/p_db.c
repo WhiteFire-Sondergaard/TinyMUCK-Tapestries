@@ -25,18 +25,18 @@ static char buf[BUFFER_LEN];
 
 
 void 
-copyobj(dbref player, dbref old, dbref new)
+copyobj(dbref player, dbref old, dbref newd)
 {
     //struct object *oldp = DBFETCH(old);
-    struct object *newp = DBFETCH(new);
+    struct object *newp = DBFETCH(newd);
 
-    NAME(new) = alloc_string(NAME(old));
+    NAME(newd) = alloc_string(NAME(old));
     newp->properties = copy_prop(old);
     newp->exits = NOTHING;
     newp->contents = NOTHING;
     newp->next = NOTHING;
     newp->location = NOTHING;
-    moveto(new, player);
+    moveto(newd, player);
 
 #ifdef DISKBASE
     newp->propsfpos = 0;
@@ -44,10 +44,10 @@ copyobj(dbref player, dbref old, dbref new)
     newp->propstime = 0;
     newp->nextold = NOTHING;
     newp->prevold = NOTHING;
-    dirtyprops(new);
+    dirtyprops(newd);
 #endif
 
-    DBDIRTY(new);
+    DBDIRTY(newd);
 }
 
 
@@ -1358,7 +1358,7 @@ prim_checkpassword(PRIM_PROTOTYPE)
        abort_interp("Player dbref expected. (1)");
     if (oper2->type != PROG_STRING)
        abort_interp("Password string expected. (2)");
-    ptr = oper2->data.string? oper2->data.string->data : "";
+    ptr = oper2->data.string? oper2->data.string->data : (char *)"";
     if (ref != NOTHING && check_password(ref, ptr))
        result=1;
     else

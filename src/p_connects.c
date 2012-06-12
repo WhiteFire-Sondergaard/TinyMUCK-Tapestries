@@ -329,7 +329,7 @@ prim_descr_setuser(PRIM_PROTOTYPE)
 	abort_interp("Player dbref expected. (2)");
     if (oper3->type != PROG_STRING)
 	abort_interp("Password string expected.");
-    ptr = oper3->data.string? oper3->data.string->data : "";
+    ptr = oper3->data.string? oper3->data.string->data : (char *)"";
     if (ref != NOTHING && !check_password(ref, ptr))
 	abort_interp("Incorrect password.");
 

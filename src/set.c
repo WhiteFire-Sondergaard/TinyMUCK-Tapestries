@@ -905,7 +905,7 @@ do_set(dbref player, const char *name, const char *flag)
     if (index(flag, PROP_DELIMITER)) {
 	/* copy the string so we can muck with it */
 	char   *type = alloc_string(flag);	/* type */
-	char   *class = (char *) index(type, PROP_DELIMITER);	/* class */
+	char   *pclass = (char *) index(type, PROP_DELIMITER);	/* pclass */
 	char   *x;	/* to preserve string location so we can free it */
 	char   *temp;
 	int ival = 0;
@@ -927,20 +927,20 @@ do_set(dbref player, const char *name, const char *flag)
 	    return;
 	}
 	/* get rid of trailing spaces and slashes */
-	for (temp = class - 1; temp >= type && isspace(*temp); temp--);
+	for (temp = pclass - 1; temp >= type && isspace(*temp); temp--);
 	while (temp >= type && *temp == '/') temp--;
 	*(++temp) = '\0';
 
-	class++;		/* move to next character */
-	/* while (isspace(*class) && *class) class++; */
-	if (*class == '^' && number(class+1))
-	    ival = atoi(++class);
+	pclass++;		/* move to next character */
+	/* while (isspace(*pclass) && *pclass) pclass++; */
+	if (*pclass == '^' && number(pclass+1))
+	    ival = atoi(++pclass);
 
 	if (!Wizard(OWNER(player)) && (Prop_SeeOnly(type)||Prop_Hidden(type))){
 	    notify(player, "Permission denied.");
 	    return;
 	}
-	if (!(*class)) {
+	if (!(*pclass)) {
 	    ts_modifyobject(thing);
 	    remove_property(thing, type);
 	    notify(player, "Property removed.");
@@ -949,7 +949,7 @@ do_set(dbref player, const char *name, const char *flag)
 	    if (ival) {
 		add_property(thing, type, NULL, ival);
 	    } else {
-		add_property(thing, type, class, 0);
+		add_property(thing, type, pclass, 0);
 	    }
 	    notify(player, "Property set.");
 	}

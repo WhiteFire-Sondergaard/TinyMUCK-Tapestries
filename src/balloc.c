@@ -306,8 +306,8 @@ reballoc(void *ptr, int newsize)
     if (mp.ptr->size > newsize) {
 	return ptr;
     }
-    p = balloc(newsize);
-    q = ptr;
+    p = (unsigned char *)balloc(newsize);
+    q = (unsigned char *)ptr;
     for (i = 0; i < mp.ptr->size; i++)
 	p[i] = q[i];
     bfree_memptr(mp);

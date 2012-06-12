@@ -43,7 +43,7 @@
  * COMPRESS compiler option.
  *
  * Revision 1.2  90/08/02  18:50:00  rearl
- * Fixed NULL pointer problem in get_property_class().
+ * Fixed NULL pointer problem in get_property_pclass().
  *
  * Revision 1.1  90/07/19  23:04:03  casie
  * Initial revision
@@ -198,10 +198,10 @@ set_lock_property(dbref player, const char *type, const char *lok)
 
 /* adds a new property to an object */
 void
-add_prop_nofetch(dbref player, const char *type, const char *class, int value)
+add_prop_nofetch(dbref player, const char *type, const char *pclass, int value)
 {
-    if (class && *class) {
-	set_property_nofetch(player, type, PROP_STRTYP, (int)class);
+    if (pclass && *pclass) {
+	set_property_nofetch(player, type, PROP_STRTYP, (int)pclass);
     } else if (value) {
 	set_property_nofetch(player, type, PROP_INTTYP, value);
     } else {
@@ -212,15 +212,15 @@ add_prop_nofetch(dbref player, const char *type, const char *class, int value)
 
 /* adds a new property to an object */
 void
-add_property(dbref player, const char *type, const char *class, int value)
+add_property(dbref player, const char *type, const char *pclass, int value)
 {
 
 #ifdef DISKBASE
     fetchprops(player);
-    add_prop_nofetch(player, type, class, value);
+    add_prop_nofetch(player, type, pclass, value);
     dirtyprops(player);
 #else
-    add_prop_nofetch(player, type, class, value);
+    add_prop_nofetch(player, type, pclass, value);
 #endif
     DBDIRTY(player);
 }
@@ -327,21 +327,21 @@ get_property(dbref player, const char *type)
 /* checks if object has property, returning 1 if it or any of it's contents has
    the property stated                                                      */
 int 
-has_property(dbref player, dbref what, const char *type, const char *class, int value)
+has_property(dbref player, dbref what, const char *type, const char *pclass, int value)
 {
     dbref   things;
 
-    if (has_property_strict(player, what, type, class, value))
+    if (has_property_strict(player, what, type, pclass, value))
 	return 1;
     for (things = DBFETCH(what)->contents; things != NOTHING;
 	    things = DBFETCH(things)->next) {
-	if (has_property(player, things, type, class, value))
+	if (has_property(player, things, type, pclass, value))
 	    return 1;
     }
     if (tp_lock_envcheck) {
 	things = getparent(what);
 	while (things != NOTHING) {
-	    if (has_property_strict(player, things, type, class, value))
+	    if (has_property_strict(player, things, type, pclass, value))
 		return 1;
 	    things = getparent(things);
 	}
@@ -352,7 +352,7 @@ has_property(dbref player, dbref what, const char *type, const char *class, int 
 
 /* checks if object has property, returns 1 if it has the property */
 int 
-has_property_strict(dbref player, dbref what, const char *type, const char *class, int value)
+has_property_strict(dbref player, dbref what, const char *type, const char *pclass, int value)
 {
     PropPtr p;
     const char *str;
@@ -374,7 +374,7 @@ has_property_strict(dbref player, dbref what, const char *type, const char *clas
 
 	    ptr = do_parse_mesg(player, what, str, "(Lock)",
 				buf, (MPI_ISPRIVATE | MPI_ISLOCK));
-	    return (equalstr((char *)class, ptr));
+	    return (equalstr((char *)pclass, ptr));
 	} else if (PropType(p) == PROP_LOKTYP) {
 	    return 0;
 	} else {
@@ -384,7 +384,7 @@ has_property_strict(dbref player, dbref what, const char *type, const char *clas
     return 0;
 }
 
-/* return class (string value) of property */
+/* return pclass (string value) of property */
 const char *
 get_property_class(dbref player, const char *type)
 {
@@ -425,10 +425,10 @@ get_property_value(dbref player, const char *type)
 
 /* return boolexp lock of property */
 dbref
-get_property_dbref(dbref player, const char *class)
+get_property_dbref(dbref player, const char *pclass)
 {
     PropPtr p;
-    p = get_property(player, class);
+    p = get_property(player, pclass);
     if (!p) return NOTHING;
 #ifdef DISKBASE
     propfetch(player, p);
@@ -441,10 +441,10 @@ get_property_dbref(dbref player, const char *class)
 
 /* return boolexp lock of property */
 struct boolexp *
-get_property_lock(dbref player, const char *class)
+get_property_lock(dbref player, const char *pclass)
 {
     PropPtr p;
-    p = get_property(player, class);
+    p = get_property(player, pclass);
     if (!p) return TRUE_BOOLEXP;
 #ifdef DISKBASE
     propfetch(player, p);

@@ -56,7 +56,7 @@ int free_mfuncs(int downto);
 
 #define CHECKRETURN(vari,funam,num) if (!vari) { sprintf(buf, "%s %c%s%c (%s)", get_mvar("how"), MFUN_LEADCHAR, funam, MFUN_ARGEND, num);  notify_nolisten(player, buf, 1);  return NULL; }
 
-#define ABORT_MPI(funam,mesg) { sprintf(buf, "%s %c%s%c: %s", get_mvar("how"), MFUN_LEADCHAR, funam, MFUN_ARGEND, mesg);  notify_nolisten(player, buf, 1);  return NULL; }
+#define ABORT_MPI(funam,mesg) { sprintf((char *)buf, "%s %c%s%c: %s", get_mvar("how"), MFUN_LEADCHAR, funam, MFUN_ARGEND, mesg);  notify_nolisten(player, (char *)buf, 1);  return NULL; }
 
 typedef char argv_typ[10][BUFFER_LEN];
 

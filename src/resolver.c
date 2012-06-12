@@ -156,7 +156,7 @@ hostadd_timestamp(long ip, const char *name)
 void    set_signals(void);
 
 #ifdef _POSIX_VERSION
-void our_signal(int signo, void (*sighandler)());
+void our_signal(int signo, void (*sighandler)(int));
 #else
 # define our_signal(s,f) signal((s),(f))
 #endif
@@ -170,7 +170,7 @@ void our_signal(int signo, void (*sighandler)());
  * Calls sigaction() to set a signal, if we are posix.
  */
 #ifdef _POSIX_VERSION
-void our_signal(int signo, void (*sighandler)())
+void our_signal(int signo, void (*sighandler)(int))
 {
     struct sigaction	act, oact;
     

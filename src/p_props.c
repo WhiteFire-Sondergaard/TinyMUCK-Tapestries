@@ -742,7 +742,7 @@ prim_parseprop(PRIM_PROTOTYPE)
 #endif
 
     }
-    ptr = (oper2->data.string)? oper2->data.string->data : "";
+    ptr = (oper2->data.string)? oper2->data.string->data : (char *)"";
     if(temp) {
 	result = oper4->data.number & (~MPI_ISLISTENER);
         ptr = do_parse_mesg(player, oper3->data.objref, temp,

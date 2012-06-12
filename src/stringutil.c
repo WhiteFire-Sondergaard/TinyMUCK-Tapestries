@@ -85,7 +85,7 @@ extern const char *uppercase, *lowercase;
 #ifdef COMPRESS
 extern const char *uncompress(const char *);
 
-#endif				/* COMPRESS */
+#endif                          /* COMPRESS */
 
 /*
  * routine to be used instead of strcasecmp() in a sorting routine
@@ -112,7 +112,7 @@ int alphanum_compare(const char *t1, const char *s2)
         cnt1 = cnt2 = 0;
   
         /* back up before zeros */
-	if (s1 > t1 && *s2 == '0') s1--, s2--;     /* curr chars are diff */
+        if (s1 > t1 && *s2 == '0') s1--, s2--;     /* curr chars are diff */
         while (s1 > t1 && *s1 == '0') s1--, s2--;  /* prev chars are same */
         if (!isdigit(*s1)) s1++, s2++;
   
@@ -140,7 +140,7 @@ int
 string_compare(register const char *s1, register const char *s2)
 {
     while (*s1 && DOWNCASE(*s1) == DOWNCASE(*s2))
-	s1++, s2++;
+        s1++, s2++;
 
     return (DOWNCASE(*s1) - DOWNCASE(*s2));
 }
@@ -152,17 +152,17 @@ exit_prefix(register const char *string, register const char *prefix)
     const char *s = string;
     while (*s) {
         p = prefix;
-	string = s;
+        string = s;
         while(*s && *p && DOWNCASE(*s) == DOWNCASE(*p)) {
             s++; p++;
         }
-	while (*s && isspace(*s)) s++;
+        while (*s && isspace(*s)) s++;
         if (!*p && (!*s || *s == EXIT_DELIMITER)) {
-	    return string;
+            return string;
         }
         while(*s && (*s != EXIT_DELIMITER)) s++;
         if (*s) s++;
-	while (*s && isspace(*s)) s++;
+        while (*s && isspace(*s)) s++;
     }
     return 0;
 }
@@ -171,7 +171,7 @@ int
 string_prefix(register const char *string, register const char *prefix)
 {
     while (*string && *prefix && DOWNCASE(*string) == DOWNCASE(*prefix))
-	string++, prefix++;
+        string++, prefix++;
     return *prefix == '\0';
 }
 
@@ -180,15 +180,15 @@ const char *
 string_match(register const char *src, register const char *sub)
 {
     if (*sub != '\0') {
-	while (*src) {
-	    if (string_prefix(src, sub))
-		return src;
-	    /* else scan to beginning of next word */
-	    while (*src && isalnum(*src))
-		src++;
-	    while (*src && !isalnum(*src))
-		src++;
-	}
+        while (*src) {
+            if (string_prefix(src, sub))
+                return src;
+            /* else scan to beginning of next word */
+            while (*src && isalnum(*src))
+                src++;
+            while (*src && !isalnum(*src))
+                src++;
+        }
     }
     return 0;
 }
@@ -215,22 +215,22 @@ pronoun_substitute(dbref player, const char *str)
     static char buf[BUFFER_LEN * 2];
     char    orig[BUFFER_LEN];
     char   *result;
-    const char *self_sub = NULL;	/* self substitution code */
+    const char *self_sub = NULL;        /* self substitution code */
     dbref   mywhere = player;
     int sex;
 
     static const char *subjective[] = {"", "it",     "she",     "he",      "sie"};
     static const char *possessive[] = {"", "its",    "her",     "his",     "hir"};
-    static const char *objective[] = {	"", "it",     "her",     "him",     "hir"};
-    static const char *reflexive[] = {	"", "itself", "herself", "himself", "hirself"};
-    static const char *absolute[] = {	"", "its",    "hers",    "his",     "hirs"};
+    static const char *objective[] = {  "", "it",     "her",     "him",     "hir"};
+    static const char *reflexive[] = {  "", "itself", "herself", "himself", "hirself"};
+    static const char *absolute[] = {   "", "its",    "hers",    "his",     "hirs"};
 
     prn[0] = '%';
     prn[2] = '\0';
 
 #ifdef COMPRESS
     str = uncompress(str);
-#endif				/* COMPRESS */
+#endif                          /* COMPRESS */
 
     strcpy(orig, str);
     str = orig;
@@ -238,20 +238,20 @@ pronoun_substitute(dbref player, const char *str)
     sex = genderof(player);
     result = buf;
     while (*str) {
-	if (*str == '%') {
-	    *result = '\0';
-	    prn[1] = c = *(++str);
-	    if (c == '%') {
-		*(result++) = '%';
-		str++;
+        if (*str == '%') {
+            *result = '\0';
+            prn[1] = c = *(++str);
+            if (c == '%') {
+                *(result++) = '%';
+                str++;
             } else if (!c) { /* 11/24/2003 WhiteFire String ends in % */
                 return buf;
-	    } else {
-		mywhere = player;
-		d = (isupper(c)) ? c : toupper(c);
+            } else {
+                mywhere = player;
+                d = (isupper(c)) ? c : toupper(c);
 
-		if (d != 'N' && d != 'n')
-		{
+                if (d != 'N' && d != 'n')
+                {
                     if (d == 'A' || d == 'S' || d == 'O' ||
                         d == 'P' || d == 'R') {
 #ifdef COMPRESS
@@ -266,95 +266,95 @@ pronoun_substitute(dbref player, const char *str)
                         self_sub = envpropstr(&mywhere, prn);
 #endif
                     }
-		}
+                }
 
-		if (self_sub) {
-		    if (((result - buf) + strlen(self_sub)) > (BUFFER_LEN - 2))
-			return buf;
-		    strcat(result, self_sub);
-		    if (isupper(prn[1]) && islower(*result))
-			*result = toupper(*result);
-		    result += strlen(result);
-		    str++;
-		} else if (sex == GENDER_UNASSIGNED) {
-		    switch (c) {
-			case 'n':
-			case 'N':
-			case 'o':
-			case 'O':
-			case 's':
-			case 'S':
-			case 'r':
-			case 'R':
-			    strcat(result, PNAME(player));
-			    break;
-			case 'a':
-			case 'A':
-			case 'p':
-			case 'P':
-			    strcat(result, PNAME(player));
-			    strcat(result, "'s");
-			    break;
-			default:
-			    result[0] = *str;
-			    result[1] = 0;
-			    break;
-		    }
-		    str++;
-		    result += strlen(result);
-		    if ((result - buf) > (BUFFER_LEN - 2)) {
-			buf[BUFFER_LEN - 1] = '\0';
-			return buf;
-		    }
-		} else {
-		    switch (c) {
-			case 'a':
-			case 'A':
-			    strcat(result, absolute[sex]);
-			    break;
-			case 's':
-			case 'S':
-			    strcat(result, subjective[sex]);
-			    break;
-			case 'p':
-			case 'P':
-			    strcat(result, possessive[sex]);
-			    break;
-			case 'o':
-			case 'O':
-			    strcat(result, objective[sex]);
-			    break;
-			case 'r':
-			case 'R':
-			    strcat(result, reflexive[sex]);
-			    break;
-			case 'n':
-			case 'N':
-			    strcat(result, PNAME(player));
-			    break;
-			default:
-			    result[0] = *str;
-			    result[1] = 0;
-			    break;
-		    }
-		    if (isupper(c) && islower(*result)) {
-			*result = toupper(*result);
-		    }
-		    result += strlen(result);
-		    str++;
-		    if ((result - buf) > (BUFFER_LEN - 2)) {
-			buf[BUFFER_LEN - 1] = '\0';
-			return buf;
-		    }
-		}
-	    }
-	} else {
-	    if ((result - buf) > (BUFFER_LEN - 2)) {
-		buf[BUFFER_LEN - 1] = '\0';
-		return buf;
-	    }
-	    *result++ = *str++;
-	}
+                if (self_sub) {
+                    if (((result - buf) + strlen(self_sub)) > (BUFFER_LEN - 2))
+                        return buf;
+                    strcat(result, self_sub);
+                    if (isupper(prn[1]) && islower(*result))
+                        *result = toupper(*result);
+                    result += strlen(result);
+                    str++;
+                } else if (sex == GENDER_UNASSIGNED) {
+                    switch (c) {
+                        case 'n':
+                        case 'N':
+                        case 'o':
+                        case 'O':
+                        case 's':
+                        case 'S':
+                        case 'r':
+                        case 'R':
+                            strcat(result, PNAME(player));
+                            break;
+                        case 'a':
+                        case 'A':
+                        case 'p':
+                        case 'P':
+                            strcat(result, PNAME(player));
+                            strcat(result, "'s");
+                            break;
+                        default:
+                            result[0] = *str;
+                            result[1] = 0;
+                            break;
+                    }
+                    str++;
+                    result += strlen(result);
+                    if ((result - buf) > (BUFFER_LEN - 2)) {
+                        buf[BUFFER_LEN - 1] = '\0';
+                        return buf;
+                    }
+                } else {
+                    switch (c) {
+                        case 'a':
+                        case 'A':
+                            strcat(result, absolute[sex]);
+                            break;
+                        case 's':
+                        case 'S':
+                            strcat(result, subjective[sex]);
+                            break;
+                        case 'p':
+                        case 'P':
+                            strcat(result, possessive[sex]);
+                            break;
+                        case 'o':
+                        case 'O':
+                            strcat(result, objective[sex]);
+                            break;
+                        case 'r':
+                        case 'R':
+                            strcat(result, reflexive[sex]);
+                            break;
+                        case 'n':
+                        case 'N':
+                            strcat(result, PNAME(player));
+                            break;
+                        default:
+                            result[0] = *str;
+                            result[1] = 0;
+                            break;
+                    }
+                    if (isupper(c) && islower(*result)) {
+                        *result = toupper(*result);
+                    }
+                    result += strlen(result);
+                    str++;
+                    if ((result - buf) > (BUFFER_LEN - 2)) {
+                        buf[BUFFER_LEN - 1] = '\0';
+                        return buf;
+                    }
+                }
+            }
+        } else {
+            if ((result - buf) > (BUFFER_LEN - 2)) {
+                buf[BUFFER_LEN - 1] = '\0';
+                return buf;
+            }
+            *result++ = *str++;
+        }
     }
     *result = '\0';
     return buf;
@@ -369,10 +369,10 @@ alloc_string(const char *string)
 
     /* NULL, "" -> NULL */
     if (!string || !*string)
-	return 0;
+        return 0;
 
     if ((s = (char *) malloc(strlen(string) + 1)) == 0) {
-	abort();
+        abort();
     }
     strcpy(s, string);
     return s;
@@ -387,12 +387,12 @@ alloc_prog_string(const char *s)
     int     length;
 
     if (s == NULL || *s == '\0')
-	return (NULL);
+        return (NULL);
 
     length = strlen(s);
     if ((ss = (struct shared_string *)
-	 malloc(sizeof(struct shared_string) + length)) == NULL)
-	abort();
+         malloc(sizeof(struct shared_string) + length)) == NULL)
+        abort();
     ss->links = 1;
     ss->length = length;
     bcopy(s, ss->data, ss->length + 1);
@@ -408,7 +408,7 @@ string_dup(const char *s)
 
     p = (char *) malloc(1 + strlen(s));
     if (p)
-	(void) strcpy(p, s);
+        (void) strcpy(p, s);
     return (p);
 }
 #endif
@@ -427,9 +427,9 @@ intostr(int i)
     num[15] = '\0';
     if (i < 0) i = -i;
     while (i) {
-	j = i % 10;
-	*ptr2-- = '0' + j;
-	i /= 10;
+        j = i % 10;
+        *ptr2-- = '0' + j;
+        i /= 10;
     }
     if (!k) *ptr2-- = '0';
     if (k < 0) *ptr2-- = '-';
@@ -441,29 +441,29 @@ name_mangle(dbref obj)
 {
 #if defined(ANONYMITY)
     static char pad[32];
-    PropPtr	p;
+    PropPtr     p;
 
     if(!(p=get_property(obj, "@fakename")) || PropType(p)!=PROP_STRTYP)
-	return db[obj].name;
+        return db[obj].name;
     sprintf(pad, "\001%s\002", l64a(obj));
     return pad;
 #else
-	return db[obj].name;
+        return db[obj].name;
 #endif
 }
 
 const char *unmangle(dbref player, const char *s)
 {
 #if defined(ANONYMITY)
-    char	in[16384];
-    static char	buf[16384];
-    char	pad[1024];
-    char	*ptr, *src, *name;
-    dbref	is;
-    PropPtr	p;
+    char        in[16384];
+    static char buf[16384];
+    char        pad[1024];
+    char        *ptr, *src, *name;
+    dbref       is;
+    PropPtr     p;
 
     if(!s)
-	return s;
+        return s;
 
     strcpy(in, s);
     ptr = buf;
@@ -472,37 +472,37 @@ const char *unmangle(dbref player, const char *s)
 
     while(name = strchr(src, 1))
     {
-	*(name++) = 0;
-	strcpy(ptr, src);
-	if(src = strchr(name, 2))
-	   *(src++) = 0;
+        *(name++) = 0;
+        strcpy(ptr, src);
+        if(src = strchr(name, 2))
+           *(src++) = 0;
         else
-	   src = name+strlen(name);
+           src = name+strlen(name);
 
-	is = a64l(name);
-	strcpy(pad, "@knows/");
-	strcat(pad, NAME(is));
+        is = a64l(name);
+        strcpy(pad, "@knows/");
+        strcat(pad, NAME(is));
 
-	if((p=get_property(is, "@disguise")) && PropType(p)==PROP_STRTYP) {
+        if((p=get_property(is, "@disguise")) && PropType(p)==PROP_STRTYP) {
 #ifdef DISKBASE
-	    propfetch(is, p);
+            propfetch(is, p);
 #endif
-	    strcpy(pad, uncompress(PropDataStr(p)));
-	} else if((p=get_property(player, pad)) && PropType(p)==PROP_STRTYP) {
+            strcpy(pad, uncompress(PropDataStr(p)));
+        } else if((p=get_property(player, pad)) && PropType(p)==PROP_STRTYP) {
 #ifdef DISKBASE
-	    propfetch(player, p);
+            propfetch(player, p);
 #endif
-	    strcpy(pad, uncompress(PropDataStr(p)));
-	} else if((p=get_property(is,"@fakename"))&&PropType(p)==PROP_STRTYP) {
+            strcpy(pad, uncompress(PropDataStr(p)));
+        } else if((p=get_property(is,"@fakename"))&&PropType(p)==PROP_STRTYP) {
 #ifdef DISKBASE
-	    propfetch(is, p);
+            propfetch(is, p);
 #endif
-	    strcpy(pad, uncompress(PropDataStr(p)));
-	else
-	    strcpy(pad, NAME(is));
+            strcpy(pad, uncompress(PropDataStr(p)));
+        else
+            strcpy(pad, NAME(is));
 
-	strcat(ptr, pad);
-	ptr += strlen(ptr);
+        strcat(ptr, pad);
+        ptr += strlen(ptr);
     }
 
     strcat(ptr, src);
@@ -558,37 +558,41 @@ strencrypt(const char *data, const char *key)
 
     seed = 0;
     for (cp = key; *cp; cp++)
-	seed = ((((*cp) ^ seed) + 170) % 192);
+        seed = ((((*cp) ^ seed) + 170) % 192);
 
     seed2 = 0;
     for (cp = data; *cp; cp++)
-	seed2 = ((((*cp) ^ seed2) + 21) & 0xff);
+        seed2 = ((((*cp) ^ seed2) + 21) & 0xff);
     seed3 = seed2 = ((seed2 ^ (seed ^ (RANDOM() >> 24))) & 0x3f);
 
     count = seed + 11;
-    for (upt = data, ups = buf, cp = key; *upt; upt++) {
-	count = (((*cp) ^ count) + (seed ^ seed2)) & 0xff;
-	seed2 = ((seed2 + 1) & 0x3f);
-	if (!*(++cp)) cp = key;
-	result = (enarr[*upt] - (32 - (CHARCOUNT - 96))) + count + seed;
-	*ups = enarr[(result % CHARCOUNT) + (32 - (CHARCOUNT - 96))];
-	count = (((*upt) ^ count) + seed) & 0xff;
-	ups++;
+    for (upt = (const unsigned char *)data, 
+        ups = (unsigned char *)buf, cp = key;
+        *upt; 
+        upt++) 
+    {
+        count = (((*cp) ^ count) + (seed ^ seed2)) & 0xff;
+        seed2 = ((seed2 + 1) & 0x3f);
+        if (!*(++cp)) cp = key;
+        result = (enarr[*upt] - (32 - (CHARCOUNT - 96))) + count + seed;
+        *ups = enarr[(result % CHARCOUNT) + (32 - (CHARCOUNT - 96))];
+        count = (((*upt) ^ count) + seed) & 0xff;
+        ups++;
     }
     *ups++ = '\0';
 
-    ptr = linebuf;
+    ptr = (unsigned char *)linebuf;
 
     linelen = strlen(data);
-    *ptr++ = (' ' + 1);
-    *ptr++ = (' ' + seed3);
+    *ptr++ = (unsigned char)(' ' + 1);
+    *ptr++ = (unsigned char)(' ' + seed3);
     limit--;
     limit--;
 
     for(cp = buf; cp < &buf[linelen]; cp++){
-	limit--;
-	if (limit < 0) break;
-	*ptr++ = *cp;
+        limit--;
+        if (limit < 0) break;
+        *ptr++ = *cp;
     }
     *ptr++ = '\0';
     return linebuf;
@@ -615,7 +619,7 @@ strdecrypt(const char *data, const char *key)
     if (!initialized_crypt)
         init_crypt();
 
-    ptr = linebuf;
+    ptr = (unsigned char *)linebuf;
 
     if ((data[0] - ' ') < 1 || (data[0] - ' ') > 1) {
         return "";
@@ -629,24 +633,24 @@ strdecrypt(const char *data, const char *key)
 
     seed = 0;
     for (cp = key; *cp; cp++)
-	seed = (((*cp) ^ seed) + 170) % 192;
+        seed = (((*cp) ^ seed) + 170) % 192;
 
     count = seed + 11;
     outlen = strlen(linebuf);
-    upt = linebuf;
-    ups = buf;
+    upt = (unsigned char *)linebuf;
+    ups = (unsigned char *)buf;
     cp = key;
     while ((const char *)upt < &linebuf[outlen]) {
-	count = (((*cp) ^ count) + (seed ^ seed2)) & 0xff;
-	if (!*(++cp)) cp = key;
-	seed2 = ((seed2 + 1) & 0x3f);
+        count = (((*cp) ^ count) + (seed ^ seed2)) & 0xff;
+        if (!*(++cp)) cp = key;
+        seed2 = ((seed2 + 1) & 0x3f);
 
-	result = (enarr[*upt] - (32 - (chrcnt - 96))) - (count + seed);
-	while (result < 0) result += chrcnt;
-	*ups = enarr[result + (32 - (chrcnt - 96))];
+        result = (enarr[*upt] - (32 - (chrcnt - 96))) - (count + seed);
+        while (result < 0) result += chrcnt;
+        *ups = enarr[result + (32 - (chrcnt - 96))];
 
-	count = (((*ups) ^ count) + seed) & 0xff;
-	ups++; upt++;
+        count = (((*ups) ^ count) + seed) & 0xff;
+        ups++; upt++;
     }
     *ups++ = '\0';
 
