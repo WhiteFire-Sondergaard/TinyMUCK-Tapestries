@@ -64,20 +64,20 @@
 
 
 typedef struct timenode {
-    struct timenode *next;
-    int     typ;
-    int     subtyp;
-    time_t  when;
-    dbref   called_prog;
-    char   *called_data;
-    char   *command;
-    char   *str3;
-    dbref   uid;
-    dbref   loc;
-    dbref   trig;
-    struct frame *fr;
-    struct inst *where;
-    int     eventnum;
+    struct timenode *next;  // Linked list
+    int     typ;            // Script type
+    int     subtyp;         // State
+    time_t  when;           // When to next execute
+    dbref   called_prog;    // Dbref of called program
+    char   *called_data;    // str1
+    char   *command;        // cmdstr
+    char   *str3;           // str3
+    dbref   uid;            // user or "speaker"
+    dbref   loc;            // Location of event
+    dbref   trig;           // triggering object
+    struct frame *fr;       // Muf interp
+    struct inst *where;     // Instruction pointer
+    int     eventnum;       // event ID
 }      *timequeue;
 
 /*
@@ -328,8 +328,7 @@ handle_read_event(dbref player, const char *command)
     ptr = tqhead;
     lastevent = NULL;
     while (ptr) {
-        if (ptr->typ == TQ_MUF_TYP && ptr->subtyp == TQ_MUF_READ &&
-                ptr->uid == player) {
+        if (ptr->subtyp == TQ_READ && ptr->uid == player) {
             break;
         }
         lastevent = ptr;

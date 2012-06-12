@@ -305,7 +305,11 @@ main (int argc, char**argv)
     queue_add_node("er ", 99999999);
 
     while (!feof(stdin)) {
-        gets(buf);
+        if (fgets(buf, sizeof(buf), stdin) == NULL) {
+            printf("read error.\n");
+            abort();
+        }
+        // gets(buf); // Just say no to gets()
         p = strchr(buf, ':');
         if (p) {
 	    p = strchr(p + 1, ':');

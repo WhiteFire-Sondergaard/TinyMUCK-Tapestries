@@ -212,7 +212,7 @@ interp(dbref player, dbref location, dbref program,
 	DBFETCH(program)->sp.program.code[3].data.number++;
     }
     DBFETCH(program)->sp.program.instances++;
-    push(fr->argument.st, &(fr->argument.top), PROG_STRING, match_args ?
+    push(fr->argument.st, &(fr->argument.top), PROG_STRING, (match_args != NULL) ?
 	 MIPSCAST alloc_prog_string(match_args) : 0);
     mv = interp_loop(player, program, fr, rettyp);
     return (mv);
