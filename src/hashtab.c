@@ -135,7 +135,7 @@ void
 kill_hash(hash_tab * table, unsigned size, int freeptrs)
 {
     register hash_entry *hp, *np;
-    int     i;
+    unsigned int     i;
 
     for (i = 0; i < size; i++) {
 	for (hp = table[i]; hp != NULL; hp = np) {

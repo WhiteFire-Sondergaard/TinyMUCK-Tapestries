@@ -70,7 +70,7 @@ rwhocli_setup(const char *server, const char *serverpw, const char *myname, cons
 	} else {
 		unsigned long	f;
 
-		if((f = inet_addr(server)) == -1L)
+		if((f = inet_addr(server)) == INADDR_NONE)
 			return(1);
 		(void)bcopy((char *)&f,(char *)&addr.sin_addr,sizeof(f));
 	}

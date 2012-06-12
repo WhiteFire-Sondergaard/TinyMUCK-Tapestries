@@ -33,7 +33,7 @@ struct match_data {
     dbref match_from;		/* object which is being matched around */
     const char *match_name;	/* name to match */
     int preferred_type;		/* preferred type */
-    int longest_match;		/* longest matched string */
+    unsigned int longest_match;		/* longest matched string */
     int match_level;		/* the highest priority level so far */
     int block_equals;		/* block matching of same name exits */
 };

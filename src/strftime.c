@@ -285,7 +285,7 @@ format_time(char *buf, int max_len, const char *fmt, struct tm * tmval)
 			tmp[2] = '\0';
 			break;
 		}
-		if (pos + strlen(tmp) > max_len)
+		if (pos + strlen(tmp) > (unsigned)max_len)
 		    return (0);
 		(void) strcpy(buf + pos, tmp);
 		pos += strlen(tmp);
