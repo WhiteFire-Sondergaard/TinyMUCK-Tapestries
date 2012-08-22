@@ -237,7 +237,7 @@ void p_null(dbref player, dbref program, int mlev, struct inst *pc, struct inst 
 void RCLEAR(struct inst *oper, char *file, int line);
 void purge_free_frames(void);
 void purge_all_free_frames(void);
-struct inst *interp(dbref player, dbref location, dbref program, dbref source, int nosleeps, int whichperms, int rettyp);
+struct frame *create_interp_frame(dbref player, dbref location, dbref program, dbref source, int nosleeps, int whichperms);
 void prog_clean(struct frame *fr);
 void reload(struct frame *fr, int atop, int stop);
 int muf_false(struct inst *p);

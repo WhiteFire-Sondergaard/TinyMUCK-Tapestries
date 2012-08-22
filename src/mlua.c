@@ -26,12 +26,28 @@
 /* Stuff from timequeue.c */
 int add_lua_read_event(dbref player, dbref prog, struct mlua_interp *interp);
 int add_lua_delay_event(int delay, dbref player, dbref loc, dbref trig,
-	      	dbref prog, struct mlua_interp *interp, const char *mode);
+                dbref prog, struct mlua_interp *interp, const char *mode);
 
 /*
  * PID stuff. Should be a functioncall to somewhere. This is kinda lame.
  */
 extern int top_pid;
+
+/*
+ * State to Interpeter
+ */
+mlua_interp *mlua_get_interp(lua_State *L)
+{
+    struct mlua_interp *interp;
+
+    /* Extract the interpeter from the state */
+    lua_pushstring(L, "mlua_interp");
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    interp = (mlua_interp *)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    return interp;
+}
 
 /*
  * These are some C functions callable from LUA. These will be moved
@@ -51,7 +67,7 @@ static int mlua_lib_print (lua_State *L) {
   /* get the player dbref from registry */
   lua_pushstring(L, "mlua_interp");
   lua_gettable(L, LUA_REGISTRYINDEX);
-  interp = lua_touserdata(L, -1);
+  interp = (mlua_interp *)lua_touserdata(L, -1);
   lua_pop(L, 1);
   if (!interp)
   {
@@ -71,11 +87,11 @@ static int mlua_lib_print (lua_State *L) {
       return luaL_error(L, "`tostring' must return a string to `print'");
     if (i>1 && (bl + 1 < BUFFER_LEN)) {
         strcat(output, " ");
-	bl++;
+        bl++;
     }
     sl = strlen(s);
     if (bl + sl < BUFFER_LEN) {
-	strcat(output, s);
+        strcat(output, s);
     }    
     lua_pop(L, 1);  /* pop result */
   }
@@ -91,7 +107,7 @@ static int mlua_lib_read (lua_State *L) {
     /* get the player dbref from registry */
     lua_pushstring(L, "mlua_interp");
     lua_gettable(L, LUA_REGISTRYINDEX);
-    interp = lua_touserdata(L, -1);
+    interp = (mlua_interp *)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
     /* See if we can yield at this point */
@@ -113,7 +129,7 @@ static int mlua_lib_yield (lua_State *L) {
     /* get the player dbref from registry */
     lua_pushstring(L, "mlua_interp");
     lua_gettable(L, LUA_REGISTRYINDEX);
-    interp = lua_touserdata(L, -1);
+    interp = (mlua_interp *)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
     /* See if we can yield at this point */
@@ -136,7 +152,7 @@ static int mlua_lib_sleep (lua_State *L) {
     /* get the player dbref from registry */
     lua_pushstring(L, "mlua_interp");
     lua_gettable(L, LUA_REGISTRYINDEX);
-    interp = lua_touserdata(L, -1);
+    interp = (mlua_interp *)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
     /* See if we can yield at this point */
@@ -188,31 +204,31 @@ static int load_program(lua_State *L, dbref program, dbref player)
     /* oops, not compiled yet... */
     if (!DBFETCH(program)->sp.program.code)
     {
-	if (!mlua_compile(player, program, TRUE))
-	{
+        if (!mlua_compile(player, program, TRUE))
+        {
             sprintf(progname, "Program %s uncompilable!",
-	        unparse_object(player, program));
-	    notify_nolisten(player, progname, 1);
-	    return FALSE;
-	}
+                unparse_object(player, program));
+            notify_nolisten(player, progname, 1);
+            return FALSE;
+        }
     }
 
     /* load code */
     error = luaL_loadbuffer(L, 
-		      DBFETCH(program)->sp.program.code,
-		      DBFETCH(program)->sp.program.siz,
-		      progname);
+                      (char *)DBFETCH(program)->sp.program.code,
+                      DBFETCH(program)->sp.program.siz,
+                      progname);
 
     /* handle any errors */
     if (error == LUA_ERRMEM || error == LUA_ERRERR)
     {
-	abort();
+        abort();
     }
     if (error == LUA_ERRRUN)
     {
-	notify_nolisten(player, "Lua Load Error!", 1);
-	notify_nolisten(player, lua_tostring(L, -1), 1);
-	return FALSE;
+        notify_nolisten(player, "Lua Load Error!", 1);
+        notify_nolisten(player, lua_tostring(L, -1), 1);
+        return FALSE;
     }
 
     return TRUE;
@@ -220,29 +236,28 @@ static int load_program(lua_State *L, dbref program, dbref player)
 
 /* Called to create a new interpeter and load code into it. */
 /* Yea, that is a lot of arguments. :) */
-static struct mlua_interp *create_interp(
+struct mlua_interp *mlua_create_interp(
     dbref program,
     const char *property,
     dbref location,
     dbref player,
-    dbref output,
+//    dbref output,
     dbref trigger,
     dbref euid,
     int mode,
     int event)
 {
     lua_State *L, *tL;
-    int error;
     struct mlua_interp *interp;
 
     /* Do some error checking */
     if (!property && Typeof(program) != TYPE_PROGRAM) return NULL;
 
     /* Create a LUA engine */
-    L = lua_open();
+    L = luaL_newstate();
     if (L == NULL)
     {
-	abort();
+        abort();
     } 
 
     /* Need to create the thread before loading code 
@@ -251,20 +266,20 @@ static struct mlua_interp *create_interp(
     if (mode != MLUA_CALLED)
         tL = lua_newthread(L);
     else
-	tL = L;
+        tL = L;
 
     /* Do some error checking */
     if (property)
     {
         /* loading code from properties is not supported yet */
         lua_close(L);
-	return NULL;
+        return NULL;
     } else {
-	if (!load_program(tL, program, player))
-	{
+        if (!load_program(tL, program, player))
+        {
             lua_close(L);
-	    return NULL;
-	}
+            return NULL;
+        }
     }
 
     /* Setup environment */
@@ -287,7 +302,7 @@ static struct mlua_interp *create_interp(
 
     /* create a table to store hidded data in the registery */
     lua_pushstring(L, "mlua_interp");
-    interp = lua_newuserdata(L, sizeof(struct mlua_interp));
+    interp = (mlua_interp *)lua_newuserdata(L, sizeof(struct mlua_interp));
     lua_settable(L, LUA_REGISTRYINDEX);
 
     /* Fill the interp table */
@@ -311,6 +326,19 @@ static struct mlua_interp *create_interp(
     interp->command = NULL;
     interp->prop = NULL;
 
+    /* Provide arguments if the program is running as a command */
+    if (!*match_cmdname)
+    {
+        lua_pushstring(interp->L, match_cmdname);
+        lua_setglobal(interp->L, "command");
+    }
+
+    if (!*match_args)
+    {
+        lua_pushstring(interp->L, match_args);
+        lua_setglobal(interp->L, "args");
+    }
+
     return interp;
 }
 
@@ -321,15 +349,15 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
     int nargs = 0;
     lua_State *L;
     lua_State *Lrunning = 
-	    (interp->mode == MLUA_CALLED) ? interp->L : interp->tL;
+            (interp->mode == MLUA_CALLED) ? interp->L : interp->tL;
 
     /* The program may be passed an arg when it starts or when resuming
      * from a READ event.
      */
     if (resume_arg)
     {
-	lua_pushstring(Lrunning, resume_arg);
-	nargs = 1;
+        lua_pushstring(Lrunning, resume_arg);
+        nargs = 1;
     }
 
     /* reset sleeping flag */
@@ -338,63 +366,63 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
     /* Resume execution */
     if (interp->mode != MLUA_CALLED)
     {
-	/* It it was not a call, then it's a thread. */
+        /* It it was not a call, then it's a thread. */
         error = lua_resume(Lrunning, nargs);
     }
     else
     {
-	/* Calls are not threads because they can not suspend. */
-	L = interp->L;
+        /* Calls are not threads because they can not suspend. */
+        L = interp->L;
         error = lua_pcall(Lrunning, nargs, /*nresults*/0, /*errfunc*/0);
     }
 
     /* handle any errors */
     if (error == LUA_ERRMEM || error == LUA_ERRERR)
     {
-	abort();
+        abort();
     }
     if (error == LUA_ERRRUN)
     {
-	notify_nolisten(interp->player, lua_tostring(Lrunning, -1), 1);
-	mlua_free_interp(interp); /* Interpeter now self-destructs */
-	return FALSE;
+        notify_nolisten(interp->player, lua_tostring(Lrunning, -1), 1);
+        mlua_free_interp(interp); /* Interpeter now self-destructs */
+        return FALSE;
     }
 
     /* Now, do we suspend again, or are we done? */
     switch (interp->why_sleep)
     {
-	case MLUA_READ:
-	    interp->inst_since_yield = 0;
+        case MLUA_READ:
+            interp->inst_since_yield = 0;
             DBSTORE(interp->player, sp.player.curr_prog, interp->program);
             DBSTORE(interp->player, sp.player.block, 0);
-	    add_lua_read_event(interp->player, interp->program, interp);
+            add_lua_read_event(interp->player, interp->program, interp);
             break;
 
         case MLUA_YIELD:
         case MLUA_FYIELD:
-	    interp->inst_since_yield = 0;
-	    DBSTORE(interp->player, sp.player.block, 
-			    (mlua_is_foreground(interp)));
+            interp->inst_since_yield = 0;
+            DBSTORE(interp->player, sp.player.block, 
+                            (mlua_is_foreground(interp)));
             add_lua_delay_event(0, interp->player, NOTHING, NOTHING,
-	          interp->program, interp,
+                  interp->program, interp,
                   (mlua_is_foreground(interp)) ? "FOREGROUND" : "BACKGROUND");
-	    break;
+            break;
 
         case MLUA_SLEEP:
-	    interp->inst_since_yield = 0;
-	    DBSTORE(interp->player, sp.player.block, 
-			    (mlua_is_foreground(interp)));
+            interp->inst_since_yield = 0;
+            DBSTORE(interp->player, sp.player.block, 
+                            (mlua_is_foreground(interp)));
             add_lua_delay_event(lua_tonumber(Lrunning, 1),
-	        interp->player, NOTHING, NOTHING, interp->program, interp,
+                interp->player, NOTHING, NOTHING, interp->program, interp,
                 "SLEEPING");
-	    break;
+            break;
 
-	case MLUA_NOTSLEEPING:
-	case MLUA_FIRSTRUN:
-	default:
-	    /* We are done. */
-	    mlua_free_interp(interp);
-	    break;
+        case MLUA_NOTSLEEPING:
+        case MLUA_FIRSTRUN:
+        default:
+            /* We are done. */
+            mlua_free_interp(interp);
+            break;
     }
 
     return TRUE;
@@ -406,7 +434,7 @@ int mlua_run(
     const char *property,
     dbref location,
     dbref player,
-    dbref output,
+//    dbref output,
     dbref trigger,
     dbref euid,
     int mode,
@@ -420,20 +448,11 @@ int mlua_run(
         property,
         location,
         player,
-        output,
+//        output,
         trigger,
-	euid,
+        euid,
         mode,
         event);
-
-    /* Provide arguments if the program is running as a command */
-    if (mode == MLUA_EVENT_CMD)
-    {
-	lua_pushstring(interp->L, match_cmdname);
-	lua_setglobal(interp->L, "command");
-	lua_pushstring(interp->L, match_args);
-       	lua_setglobal(interp->L, "args");
-    }
 
     /* Handle failure */
     if (!interp) return FALSE;
@@ -519,9 +538,9 @@ int mlua_compile(dbref player, dbref program, int silent)
     /* load the muf file if it's not already loaded... */
     if (!DBFETCH(program)->sp.program.first)
     {
-	DBFETCH(program)->sp.program.first =
-	       	(struct line *) read_program(program);
-	program_text_loaded = TRUE;
+        DBFETCH(program)->sp.program.first =
+                (struct line *) read_program(program);
+        program_text_loaded = TRUE;
     }
 
     /* Seed the first line into the state structure. */
@@ -531,7 +550,7 @@ int mlua_compile(dbref player, dbref program, int silent)
     /* If there is no first line, the program has no text to compile. */
     if (!state.curr_line)
     {
-	if (!silent) notify_nolisten(player, "No program text!", 1);
+        if (!silent) notify_nolisten(player, "No program text!", 1);
         return FALSE;
     }
 
@@ -539,8 +558,8 @@ int mlua_compile(dbref player, dbref program, int silent)
     l = lua_open();
     if (l == NULL)
     {
-	/* failure here means something very bad happened. */
-	abort();
+        /* failure here means something very bad happened. */
+        abort();
     } 
 
     /* Attempt to bytecompile program */
@@ -548,41 +567,41 @@ int mlua_compile(dbref player, dbref program, int silent)
 
     if (!error)
     {
-	if (!silent) notify_nolisten(player, "Successful Compile.", 1);
+        if (!silent) notify_nolisten(player, "Successful Compile.", 1);
     }
     else if (error == LUA_ERRSYNTAX)
     {
-	if (!silent) notify_nolisten(player, lua_tostring(l, -1), 1);
+        if (!silent) notify_nolisten(player, lua_tostring(l, -1), 1);
     }
     else
     {
-	/* lua_load returned something unexpected */
-	abort();
+        /* lua_load returned something unexpected */
+        abort();
     }
 
     /* Save the bytecode to the DB engine. */
     if (!error)
     {
-	/* Setup userdata for creating block */
-	chunk.size = 0;
-	chunk.block = NULL;
+        /* Setup userdata for creating block */
+        chunk.size = 0;
+        chunk.block = NULL;
 
-        /* dump to new block */	
+        /* dump to new block */ 
         lua_dump(l, chunk_writer, &chunk);
 
-	/* Free up the old code, if any. */
-	mlua_decompile(program);
+        /* Free up the old code, if any. */
+        mlua_decompile(program);
 
-	/* Save it ... */
-	DBFETCH(program)->sp.program.code = chunk.block;
-	DBFETCH(program)->sp.program.siz = chunk.size;
+        /* Save it ... */
+        DBFETCH(program)->sp.program.code = chunk.block;
+        DBFETCH(program)->sp.program.siz = chunk.size;
 
-	/* Debug stuff */
-	if (!silent)
-	{
-	    sprintf(msg_buff, "Bytecode is %d bytes.", chunk.size);
+        /* Debug stuff */
+        if (!silent)
+        {
+            sprintf(msg_buff, "Bytecode is %d bytes.", chunk.size);
             notify_nolisten(player, msg_buff, 1);
-	}
+        }
     }
 
     /* Destroy a the engine */    
@@ -591,8 +610,8 @@ int mlua_compile(dbref player, dbref program, int silent)
     /* If we loaded the program text, delete it. */
     if (program_text_loaded)
     {
-	free_prog_text(DBFETCH(program)->sp.program.first);
-	DBSTORE(program, sp.program.first, NULL);
+        free_prog_text(DBFETCH(program)->sp.program.first);
+        DBSTORE(program, sp.program.first, NULL);
     }
 
     /* return status */
@@ -609,24 +628,24 @@ static const char *chunk_reader(lua_State *l, void *data, size_t *size)
 
     if (state->fed_line)
     {
-	/* We have already fed this line to Lua, feed a CR and advance
-	   to next line */
-	state->curr_line = state->curr_line->next;
-	state->fed_line = FALSE;
-	*size = 1;
-	return "\n";
+        /* We have already fed this line to Lua, feed a CR and advance
+           to next line */
+        state->curr_line = state->curr_line->next;
+        state->fed_line = FALSE;
+        *size = 1;
+        return "\n";
     }
     else if (state->curr_line == NULL)
     {
-	/* out of text */
-	*size = 0;
-	return NULL;
+        /* out of text */
+        *size = 0;
+        return NULL;
     }
     else
     {
-	/* Feed line and note that we have done so. */
-	state->fed_line = TRUE;
-	*size = strlen(state->curr_line->this_line);
+        /* Feed line and note that we have done so. */
+        state->fed_line = TRUE;
+        *size = strlen(state->curr_line->this_line);
         return state->curr_line->this_line;
     }
 }
@@ -641,7 +660,7 @@ static int chunk_writer(lua_State *l, const void *p, size_t size, void *ud)
     {
         chunk->block = malloc(size);
     } else {
-	chunk->block = realloc(chunk->block, chunk->size + size);
+        chunk->block = realloc(chunk->block, chunk->size + size);
     }
 
     /* Copy data */

@@ -89,13 +89,14 @@ PROTSRC= boolexp.c case.c compile.c compress.c create.c db.c \
 	msgparse.c move.c crt_malloc.c oldcompress.c player.c predicates.c \
 	p_connects.c p_db.c p_math.c p_misc.c p_props.c p_stack.c p_strings.c \
 	property.c propdirs.c props.c rob.c rwho.c sanity.c set.c signal.c \
-	smatch.c speech.c strftime.c stringutil.c timequeue.c timestamp.c \
+	smatch.c speech.c strftime.c stringutil.c timequeue.cpp timestamp.c \
 	tune.c unparse.c utils.c wiz.c
 
 CSRC= ${PROTSRC} \
 	balloc.c \
 	match.c \
-	mfuns.c mfuns2.c
+	mfuns.c mfuns2.c \
+	interpeter.cpp
 
 LSRC= copyright.c
 MSRC= olddecomp.c reconst.c interface.c
@@ -105,8 +106,8 @@ SRC= ${MISCSRC} ${CSRC} ${LSRC} ${MSRC}
 
 COBJ= balloc.o boolexp.o case.o compile.o compress.o create.o db.o \
 	debugger.o disassem.o diskprop.o edit.o events.o game.o hashtab.o \
-	help.o inst.o interp.o log.o look.o match.o mfuns.o mfuns2.o \
-	msgparse.o move.o crt_malloc.o oldcompress.o player.o predicates.o \
+	help.o inst.o interp.o interpeter.o log.o look.o match.o mfuns.o mfuns2.o \
+	mlua.o msgparse.o move.o crt_malloc.o oldcompress.o player.o predicates.o \
 	p_connects.o p_db.o p_math.o p_misc.o p_props.o p_stack.o p_strings.o \
 	property.o propdirs.o props.o rob.o rwho.o sanity.o signal.o set.o \
 	smatch.o speech.o strftime.o stringutil.o timequeue.o timestamp.o \
@@ -122,6 +123,9 @@ TARGETS= netmuck resolver olddecompress topwords
 
 .c.o:
 	${PRE} ${CC} ${CFLAGS} -c $*.c
+
+.cpp.o:
+	${PRE} ${CC} ${CFLAGS} -c $*.cpp
 
 all:    ${TARGETS} 
 

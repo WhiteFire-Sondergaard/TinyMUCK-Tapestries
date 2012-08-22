@@ -115,12 +115,13 @@ purge_all_free_frames(void)
 
 
 
-struct inst *
-interp(dbref player, dbref location, dbref program,
-       dbref source, int nosleeps, int whichperms, int rettyp)
+struct frame *
+create_interp_frame(dbref player, dbref location, dbref program,
+       dbref source, int nosleeps, int whichperms//, int rettyp
+       )
 {
     struct frame *fr;
-    struct inst *mv;
+    //struct inst *mv;
     int     i;
 
     if (!MLevel(program) || !MLevel(OWNER(program)) ||
@@ -214,8 +215,13 @@ interp(dbref player, dbref location, dbref program,
     DBFETCH(program)->sp.program.instances++;
     push(fr->argument.st, &(fr->argument.top), PROG_STRING, (match_args != NULL) ?
 	 MIPSCAST alloc_prog_string(match_args) : 0);
+
+    /*
     mv = interp_loop(player, program, fr, rettyp);
     return (mv);
+    */
+
+    return fr;
 }
 
 static int err;
@@ -918,22 +924,22 @@ find_mlev(dbref prog, struct frame * fr, int st)
 dbref 
 find_uid(dbref player, struct frame * fr, int st, dbref program)
 {
-    if ((FLAGS(program) & STICKY) || (fr->perms == STD_SETUID)) {
-	if (FLAGS(program) & HAVEN) {
-	    if ((st > 1) && (TrueWizard(OWNER(program))))
-		return (find_uid(player, fr, st - 1, fr->caller.st[st - 1]));
-	    return (OWNER(program));
+	if ((FLAGS(program) & STICKY) || (fr->perms == STD_SETUID)) {
+		if (FLAGS(program) & HAVEN) {
+			if ((st > 1) && (TrueWizard(OWNER(program))))
+				return (find_uid(player, fr, st - 1, fr->caller.st[st - 1]));
+			return (OWNER(program));
+		}
+		return (OWNER(program));
 	}
-	return (OWNER(program));
-    }
-    if (ProgMLevel(program) < 2)
-	return (OWNER(program));
-    if ((FLAGS(program) & HAVEN) || (fr->perms == STD_HARDUID)) {
-	if (fr->trig == NOTHING)
-	    return (OWNER(program));
-	return (OWNER(fr->trig));
-    }
-    return (OWNER(player));
+	if (ProgMLevel(program) < 2)
+		return (OWNER(program));
+	if ((FLAGS(program) & HAVEN) || (fr->perms == STD_HARDUID)) {
+		if (fr->trig == NOTHING)
+			return (OWNER(program));
+		return (OWNER(fr->trig));
+	}
+	return (OWNER(player));
 }
 
 

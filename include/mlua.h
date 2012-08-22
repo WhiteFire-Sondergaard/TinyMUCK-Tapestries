@@ -40,11 +40,6 @@
 #define MLUA_EVENT_LUA		7
 #define MLUA_EVENT_LOOK		8
 
-/* Output To... */
-#define MLUA_RETRUN_NIL		1
-#define MLUA_RETRUN_INT		2
-#define MLUA_RETRUN_STRING	3
-
 /* Multitasking Mode ... */
 #define MLUA_FOREGROUND		1
 #define MLUA_BACKGROUND		2	/* Can not read */
@@ -69,7 +64,7 @@ struct mlua_interp	/* Mlua interpeter environment, */
 {
     lua_State *L; 	/* The LUA state. 
 			   DO NOT use this within Lua C functions. */
-    lua_State *tL;	/* Thread state */
+    // lua_State *tL;	/* Thread state */
 
     int pid;		/* Muck timequeue PID */
     
@@ -95,14 +90,14 @@ struct mlua_interp	/* Mlua interpeter environment, */
     char *prop;		/* malloced string with prop run */
 };
 
-/* Run a program and return TRUE or FALSE if it managed to run.
+/* 
  */
-int mlua_run(
+struct mlua_interp *mlua_create_interp(
     dbref program,
     const char *property,
     dbref location,
     dbref player,
-    dbref output,
+//    dbref output,
     dbref trigger,
     dbref euid,
     int mode,
