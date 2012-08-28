@@ -588,7 +588,7 @@ prim_interp(PRIM_PROTOTYPE)
 
     strcpy(buf, match_args);
     strcpy(match_args, oper3->data.string? oper3->data.string->data : "");
-    rv = interp(player, DBFETCH(player)->location, oper1->data.objref,
+    rv = create_and_run_interp_frame(player, DBFETCH(player)->location, oper1->data.objref,
 			oper2->data.objref, PREEMPT, STD_HARDUID, 1);
     strcpy(match_args, buf);
 

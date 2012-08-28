@@ -19,8 +19,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lua.h"
-#include "lauxlib.h"
+// extern "C" {
+// #include "lua.h"
+// #include "lauxlib.h"
+// #include "lualib.h"
+// }
+
+#include "lua.hpp"
 
 /*
  * Stupid utilities that should be in db.c
@@ -40,7 +45,7 @@ static int dbref_name (lua_State *L) {
     return 1;
 }
 
-static const luaL_reg dbref_meta[] = {
+static const luaL_Reg dbref_meta[] = {
   {"name", 		dbref_name},
 //  {"unparse",		dbref_unparse},
 //  {"__tostring", 	dbref_unparse},
@@ -52,7 +57,7 @@ static void createmeta (lua_State *L) {
   lua_pushliteral(L, "__index");
   lua_pushvalue(L, -2);  /* push metatable */
   lua_rawset(L, -3);  /* metatable.__index = metatable */
-  luaL_openlib(L, NULL, dbref_meta, 0);
+  luaL_setfuncs(L, dbref_meta, 0);
 }
 
 /*
@@ -74,14 +79,14 @@ static int mdb_new (lua_State *L) {
     return 1;  /* new userdatum is already on the stack */
 }
 
-static const luaL_reg lib_mdb[] = {
+static const luaL_Reg lib_mdb[] = {
   {"new", 		mdb_new},
   {NULL, NULL}
 };
 
 int mlua_open_mdb (lua_State *L) {
     createmeta(L);
-    luaL_openlib(L, "mdb", lib_mdb, 0);
+    luaL_newlib(L, lib_mdb);
     return 1;
 }
 

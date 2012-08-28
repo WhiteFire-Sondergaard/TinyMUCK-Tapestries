@@ -113,7 +113,23 @@ purge_all_free_frames(void)
     }
 }
 
+/* Conveniance function. */
+struct inst *
+create_and_run_interp_frame(dbref player, dbref location, dbref program,
+       dbref source, int nosleeps, int whichperms, int rettyp
+       )
+{
+    struct inst *mv;
+    struct frame *fr;
 
+    /* Create Interpeter */
+    fr = create_interp_frame(player, location, program, source, nosleeps,
+    	whichperms);
+
+    /* Run it */
+    mv = interp_loop(player, program, fr, rettyp);
+    return (mv);
+}
 
 struct frame *
 create_interp_frame(dbref player, dbref location, dbref program,

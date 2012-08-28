@@ -6,7 +6,7 @@
 #ifndef _MLUA_H
 #define _MLUA_H
 
-#include "lua.h" /* Some stuff requires this */
+#include "lua.hpp" /* Some stuff requires this */
 
 /* TODO:
  *

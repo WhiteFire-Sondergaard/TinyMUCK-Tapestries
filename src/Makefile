@@ -107,7 +107,7 @@ SRC= ${MISCSRC} ${CSRC} ${LSRC} ${MSRC}
 COBJ= balloc.o boolexp.o case.o compile.o compress.o create.o db.o \
 	debugger.o disassem.o diskprop.o edit.o events.o game.o hashtab.o \
 	help.o inst.o interp.o interpeter.o log.o look.o match.o mfuns.o mfuns2.o \
-	mlua.o msgparse.o move.o crt_malloc.o oldcompress.o player.o predicates.o \
+	mlua.o mlua_mdb.o msgparse.o move.o crt_malloc.o oldcompress.o player.o predicates.o \
 	p_connects.o p_db.o p_math.o p_misc.o p_props.o p_stack.o p_strings.o \
 	property.o propdirs.o props.o rob.o rwho.o sanity.o signal.o set.o \
 	smatch.o speech.o strftime.o stringutil.o timequeue.o timestamp.o \

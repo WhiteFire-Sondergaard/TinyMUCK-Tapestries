@@ -458,7 +458,7 @@ trigger(dbref player, dbref exit, int pflag)
 		}
 		break;
 	    case TYPE_PROGRAM:
-		(void) interp(player, DBFETCH(player)->location, dest, exit,
+		(void) create_and_run_interp_frame(player, DBFETCH(player)->location, dest, exit,
 			      FOREGROUND, STD_REGUID, 0);
 		return;
 	}

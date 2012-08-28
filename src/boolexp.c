@@ -184,7 +184,7 @@ eval_boolexp_rec(dbref player, struct boolexp * b, dbref thing)
 		    if (Typeof(player) == TYPE_PLAYER ||
 			    Typeof(player) == TYPE_THING) {
 			struct inst *rv;
-			rv = interp(player, DBFETCH(player)->location,
+			rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
 				b->thing, thing, PREEMPT, STD_HARDUID, 0);
 			return (rv != NULL);
 		    }

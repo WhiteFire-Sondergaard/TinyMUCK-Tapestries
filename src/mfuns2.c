@@ -1296,7 +1296,7 @@ mfn_muf(MFUNARGS)
     ptr = get_mvar("how");
     strcpy(match_cmdname, ptr);
     strcat(match_cmdname, "(MPI)");
-    rv = interp(player, DBFETCH(player)->location,
+    rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
                 obj, perms, PREEMPT, STD_HARDUID, 1);
 
     mpi_muf_call_levels--;

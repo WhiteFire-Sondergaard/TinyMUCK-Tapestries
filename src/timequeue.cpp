@@ -539,7 +539,7 @@ next_timequeue_event()
                             event->called_data? event->called_data : "");
                     strcpy(match_cmdname,
                             event->command? event->command : "");
-                    interp(event->uid, event->loc, event->called_prog,
+                    create_and_run_interp_frame(event->uid, event->loc, event->called_prog,
                            event->trig, BACKGROUND, STD_HARDUID, 0);
                 }
             }
@@ -947,7 +947,7 @@ propqueue(dbref player, dbref where, dbref trigger, dbref what, dbref xclude,
                 } else if (the_prog != NOTHING) {
                     strcpy(match_args, toparg? toparg : "");
                     strcpy(match_cmdname, "Queued event.");
-                    interp(player, where, the_prog, trigger,
+                    create_and_run_interp_frame(player, where, the_prog, trigger,
                            BACKGROUND, STD_HARDUID, 0);
                 }
                 propq_level--;

@@ -18,9 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
 #include "mlua.h"
 
 /* Stuff from timequeue.c */
@@ -247,7 +244,7 @@ struct mlua_interp *mlua_create_interp(
     int mode,
     int event)
 {
-    lua_State *L, *tL;
+    lua_State *L;
     struct mlua_interp *interp;
 
     /* Do some error checking */
@@ -258,15 +255,7 @@ struct mlua_interp *mlua_create_interp(
     if (L == NULL)
     {
         abort();
-    } 
-
-    /* Need to create the thread before loading code 
-     * No thread is created if we are not able to suspend.
-     */
-    if (mode != MLUA_CALLED)
-        tL = lua_newthread(L);
-    else
-        tL = L;
+    }
 
     /* Do some error checking */
     if (property)
@@ -275,7 +264,7 @@ struct mlua_interp *mlua_create_interp(
         lua_close(L);
         return NULL;
     } else {
-        if (!load_program(tL, program, player))
+        if (!load_program(L, program, player))
         {
             lua_close(L);
             return NULL;
@@ -307,7 +296,6 @@ struct mlua_interp *mlua_create_interp(
 
     /* Fill the interp table */
     interp->L = L;
-    interp->tL = tL;
     interp->pid = top_pid++;
     interp->caller = NULL;
     interp->event = event;
@@ -348,8 +336,7 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
     int error;
     int nargs = 0;
     lua_State *L;
-    lua_State *Lrunning = 
-            (interp->mode == MLUA_CALLED) ? interp->L : interp->tL;
+    lua_State *Lrunning = interp->L;
 
     /* The program may be passed an arg when it starts or when resuming
      * from a READ event.
@@ -367,7 +354,7 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
     if (interp->mode != MLUA_CALLED)
     {
         /* It it was not a call, then it's a thread. */
-        error = lua_resume(Lrunning, nargs);
+        error = lua_resume(Lrunning, NULL, nargs);
     }
     else
     {
@@ -443,7 +430,7 @@ int mlua_run(
     struct mlua_interp *interp;
 
     /* Create the interpeter */
-    interp = create_interp(
+    interp = mlua_create_interp(
         program,
         property,
         location,
@@ -555,7 +542,7 @@ int mlua_compile(dbref player, dbref program, int silent)
     }
 
     /* Create a LUA engine */
-    l = lua_open();
+    l = luaL_newstate();
     if (l == NULL)
     {
         /* failure here means something very bad happened. */
@@ -563,7 +550,7 @@ int mlua_compile(dbref player, dbref program, int silent)
     } 
 
     /* Attempt to bytecompile program */
-    error = lua_load(l, chunk_reader, &state, progname);
+    error = lua_load(l, chunk_reader, &state, progname, "t");
 
     if (!error)
     {
@@ -593,7 +580,7 @@ int mlua_compile(dbref player, dbref program, int silent)
         mlua_decompile(program);
 
         /* Save it ... */
-        DBFETCH(program)->sp.program.code = chunk.block;
+        DBFETCH(program)->sp.program.code = (inst *)chunk.block;
         DBFETCH(program)->sp.program.siz = chunk.size;
 
         /* Debug stuff */
@@ -664,7 +651,7 @@ static int chunk_writer(lua_State *l, const void *p, size_t size, void *ud)
     }
 
     /* Copy data */
-    memcpy(chunk->block + chunk->size, p, size);
+    memcpy((char *)chunk->block + chunk->size, p, size);
 
     /* Set size */
     chunk->size += size;
