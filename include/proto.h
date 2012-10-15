@@ -719,7 +719,7 @@ const char *strencrypt(const char *data, const char *key);
 const char *strdecrypt(const char *data, const char *key);
 /* timequeue.c */
 int control_process(dbref player, int count);
-int add_event(int event_typ, int subtyp, int dtime, dbref player, dbref loc, dbref trig, dbref program, struct frame *fr, const char *strdata, const char *strcmd, const char *str3);
+//int add_event(int event_typ, int subtyp, int dtime, dbref player, dbref loc, dbref trig, dbref program, struct frame *fr, const char *strdata, const char *strcmd, const char *str3);
 int add_mpi_event(int delay, dbref player, dbref loc, dbref trig, const char *mpi, const char *cmdstr, const char *argstr, int listen_p, int omesg_p);
 int add_muf_queue_event(dbref player, dbref loc, dbref trig, dbref prog, const char *argstr, const char *cmdstr, int listen_p);
 int add_muf_delayq_event(int delay, dbref player, dbref loc, dbref trig, dbref prog, const char *argstr, const char *cmdstr, int listen_p);

@@ -81,9 +81,9 @@ extern void handle_read_event(dbref player, const char *command);
 extern int add_muf_read_event(dbref player, dbref prog, struct frame *fr);
 extern int add_muf_queue_event(dbref player, dbref loc, dbref trig, dbref prog,
                     const char *argstr, const char *cmdstr, int listen_p);
-extern int add_event(int event_type, int subtyp, int dtime, dbref player,
-		    dbref loc, dbref trig, dbref program, struct frame * fr,
-		    const char *strdata, const char *strcmd, const char *str3);
+// extern int add_event(int event_type, int subtyp, int dtime, dbref player,
+// 		    dbref loc, dbref trig, dbref program, struct frame * fr,
+// 		    const char *strdata, const char *strcmd, const char *str3);
 extern void next_timequeue_event();
 extern int  in_timequeue(int pid);
 extern long next_event_time();

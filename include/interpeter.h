@@ -5,6 +5,9 @@
 #ifndef _interpeter_h_included_
 #define _interpeter_h_included_
 
+#include <sys/time.h>
+
+
 class InterpeterReturnValue; // forward declration
 
 /* 	The interpeter class itself is an abstract class that defines an API
@@ -17,16 +20,41 @@ public:
 	Stuff to be defined by the various subclasses 
 	*/
 
-	// terminate and clean up the program
-//	virtual void clean() =0;
-	// resume a running interpeter
-//	virtual void resume() =0;
-	// start an interpeter
-//	virtual InterpeterReturnValue *run() =0;
-	// are we debugging?
-//	virtual int debugging() =0;
-	// execute a debugger command.
-//	virtual int debugger(const char *command) =0;
+	virtual const char *type() = 0;
+
+	// Do what it says
+	virtual void handle_read_event(const char *command) = 0;
+
+	// Are we backgrounded?
+	virtual bool background() = 0;
+
+	// Resume running program
+	virtual void resume(const char *) = 0;
+
+	// Get totaltime for listings
+	virtual struct timeval *get_totaltime() = 0;
+
+	// Get start time for listings
+	virtual time_t get_started() = 0;
+
+	// Instructions executed
+	virtual long get_instruction_count() = 0;
+
+	// 
+	virtual bool has_refs(dbref program) = 0;
+
+	// 
+	virtual bool get_number_of_references(dbref program) = 0;
+
+	/*
+	 * Stuff that is global
+	 */
+	int get_pid() { return this->pid; };
+	Interpeter(int event, dbref player) 
+	{ 
+		this->pid = event; 
+		this->uid = player; 
+	};
 
 	/* 
 	Factory for creating execution environments 
@@ -34,25 +62,47 @@ public:
 	static Interpeter *create_interp(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property);
 
-private:
-
+protected:
+	int pid; // process id
+	dbref uid; // Player owning process
+	bool backgrounded;
+	time_t started;
 };
 
 class MUFInterpeter : public Interpeter
 {
 public:
-//	virtual void clean();
-	// resume a running interpeter
-//	virtual void resume();
-	// start an interpeter
-//	virtual InterpeterReturnValue *run();
-	// are we debugging?
-//	virtual int debugging();
-	// execute a debugger command.
-//	virtual int debugger(const char *command);
+	// What type of interpeter are we?
+	const char *type();
+
+	void handle_read_event(const char *command);
+
+	// Are we backgrounded?
+	bool background();
+
+	// Resume
+	void resume(const char *);
+
+	// Get totaltime for listings
+	struct timeval *get_totaltime();
+
+	// Get start time for listings
+	time_t get_started();
+
+	// Instructions executed
+	long get_instruction_count();
+	
+	// 
+	bool has_refs(dbref program);
+
+	// 
+	bool get_number_of_references(dbref program);
 
 	MUFInterpeter(dbref player, dbref location, dbref program,
-       dbref source, int nosleeps, int whichperms, int event, const char *property);
+       dbref source, int nosleeps, int whichperms, int event, 
+       const char *property);
+
+	~MUFInterpeter();
 private:
 	// Things required to set this up.
 	struct frame *fr;
@@ -63,20 +113,42 @@ private:
 class LuaInterpeter : public Interpeter
 {
 public:
-//	virtual void clean();
-	// resume a running interpeter
-//	virtual void resume();
-	// start an interpeter
-//	virtual InterpeterReturnValue *run();
-	// are we debugging?
-//	virtual int debugging();
-	// execute a debugger command.
-//	virtual int debugger(const char *command);
+	// What type of interpeter are we?
+	const char *type();
+
+	void handle_read_event(const char *command);
+
+	// Are we backgrounded?
+	bool background();
+
+	// Resume
+	void resume(const char *);
+
+	// Get totaltime for listings
+	struct timeval *get_totaltime();
+
+	// Get start time for listings
+	time_t get_started();
+
+	// Instructions executed
+	long get_instruction_count();
+	
+	// 
+	bool has_refs(dbref program) { return FALSE; };
+
+	// 
+	bool get_number_of_references(dbref program) { return FALSE; };
 
 	LuaInterpeter(dbref player, dbref location, dbref program,
-       dbref source, int nosleeps, int whichperms, int event, const char *property);
+       dbref source, int nosleeps, int whichperms, int event, 
+       const char *property);
 private:
+	void totaltime_start();
+	void totaltime_stop();
+
 	struct mlua_interp *fr;
+	struct timeval totaltime;   /* profiling timing code */
+	struct timeval proftime;   /* profiling timing code */
 };
 
 class InterpeterReturnValue
