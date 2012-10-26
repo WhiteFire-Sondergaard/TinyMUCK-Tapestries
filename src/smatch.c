@@ -24,7 +24,7 @@ char   *strstr(char *s1, char *s2);
 #endif
 int     equalstr(char *s, char *t);
 
-extern const char *uppercase, *lowercase;
+//extern const char *uppercase, *lowercase;
 
 #define DOWNCASE(x) (tolower((x)))
 

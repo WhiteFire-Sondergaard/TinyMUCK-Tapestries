@@ -83,7 +83,7 @@ LINTFLAGS= -I${INCLUDE}
 
 MISCSRC= Makefile ChangeLog COPYING mkversion.sh
 
-PROTSRC= boolexp.c case.c compile.c compress.c create.c db.c \
+PROTSRC= boolexp.c compile.c compress.c create.c db.c \
 	debugger.c disassem.c diskprop.c edit.c events.c game.c hashtab.c \
 	help.c inst.c interp.c log.c look.c \
 	msgparse.c move.c crt_malloc.c oldcompress.c player.c predicates.c \
@@ -104,7 +104,7 @@ MSRC= olddecomp.c reconst.c interface.c
 SRC= ${MISCSRC} ${CSRC} ${LSRC} ${MSRC}
 
 
-COBJ= balloc.o boolexp.o case.o compile.o compress.o create.o db.o \
+COBJ= balloc.o boolexp.o compile.o compress.o create.o db.o \
 	debugger.o disassem.o diskprop.o edit.o events.o game.o hashtab.o \
 	help.o inst.o interp.o interpeter.o log.o look.o match.o mfuns.o mfuns2.o \
 	mlua.o mlua_mdb.o msgparse.o move.o crt_malloc.o oldcompress.o player.o predicates.o \

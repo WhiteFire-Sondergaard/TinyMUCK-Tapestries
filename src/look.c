@@ -879,7 +879,7 @@ do_inventory(dbref player)
     do_score(player);
 }
 
-extern const char *uppercase;
+//extern const char *uppercase;
 
 #define UPCASE(x) (toupper((x)))
 

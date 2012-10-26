@@ -78,7 +78,7 @@
 #include <ctype.h>
 #include "externs.h"
 
-extern const char *uppercase, *lowercase;
+//extern const char *uppercase, *lowercase;
 
 #define DOWNCASE(x) (tolower((x)))
 
