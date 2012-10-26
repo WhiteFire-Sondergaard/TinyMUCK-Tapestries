@@ -24,29 +24,36 @@
     Interpeter stuff
 */
 /* Factory to create subclasses */
-Interpeter *Interpeter::create_interp(dbref player, dbref location, dbref program,
+std::tr1::shared_ptr<Interpeter> Interpeter::create_interp(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property)
 {
+#ifdef COMPRESS
+    const char *lang = uncompress(get_property_class(program, "~language"));
+#else
     const char *lang = get_property_class(program, "~language");
+#endif
+    std::tr1::shared_ptr<Interpeter> ret_interp;
 
     if (!MLevel(program) || !MLevel(OWNER(program)) ||
         ((source != NOTHING) && !TrueWizard(OWNER(source)) &&
             !can_link_to(OWNER(source), TYPE_EXIT, program))) 
     {
         notify_nolisten(player, "Program call: Permission denied.", 1);
-        return 0;
+        return ret_interp;
     }
 
     if (lang && (strcmp(lang, "Lua") == 0)) // Lua
     {
-        return new LuaInterpeter(player, location, program, source, 
-            nosleeps, whichperms, event, property);
+        ret_interp = std::tr1::shared_ptr<Interpeter>(new LuaInterpeter(player, location, program, source, 
+            nosleeps, whichperms, event, property));
     }
     else // MUF
     {
-        return new MUFInterpeter(player, location, program, source, 
-            nosleeps, whichperms, event, property);
+        ret_interp = std::tr1::shared_ptr<Interpeter>(new MUFInterpeter(player, location, program, source, 
+            nosleeps, whichperms, event, property));
     }
+
+    return ret_interp;
 }
 
 

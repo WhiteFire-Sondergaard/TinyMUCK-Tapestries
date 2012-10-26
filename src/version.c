@@ -15,8 +15,8 @@
 #include "params.h"
 #include "externs.h"
 
-const char *generation = "230";
-const char *creation = "Mon Oct 15 2012 at 12:58:49 PDT";
+const char *generation = "237";
+const char *creation = "Fri Oct 26 2012 at 03:04:20 PDT";
 const char *version = PATCHLEVEL;
 
 const char *infotext[] =

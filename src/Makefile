@@ -56,7 +56,7 @@ LIBR= -lm -lnsl -lssl -lxcrypt -L${LUA_LIB} -llua
 #
 # Include path, Cflags...
 #
-CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE} -I${LUA_INCLUDE}
+CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE} -I${LUA_INCLUDE} -std=c++0x
 
 #
 # for saving old copies.

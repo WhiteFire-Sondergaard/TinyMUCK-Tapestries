@@ -20,33 +20,20 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
+#include <tr1/memory>
 
+/* type of code */
 #define TQ_MUF_TYP 0
 #define TQ_MPI_TYP 1
 #define TQ_LUA_TYP 2
 
+/* type of event */
 #define TQ_QUEUE    0x0
 #define TQ_DELAY    0x1
 #define TQ_LISTEN   0x2
 #define TQ_READ     0x3
 #define TQ_SUBMASK  0x7
 #define TQ_OMESG    0x8
-
-/*
- * Legacy, please use the above.
- */
-#define TQ_MUF_QUEUE    TQ_QUEUE
-#define TQ_MUF_DELAY    TQ_DELAY
-#define TQ_MUF_LISTEN   TQ_LISTEN
-#define TQ_MUF_READ     TQ_READ
- 
-#define TQ_MPI_QUEUE    TQ_QUEUE
-#define TQ_MPI_DELAY    TQ_DELAY
-
-#define TQ_MPI_SUBMASK  TQ_SUBMASK
-#define TQ_MPI_LISTEN   TQ_LISTEN
-#define TQ_MPI_OMESG    TQ_OMESG
-
 
 /*
  * Events types and data:
@@ -62,8 +49,6 @@
  *  dmuf   0    2   when  user  loc    trig  prog  frame  mode  --      --
  *  rmuf   0    3   -1    user  loc    trig  prog  frame  mode  --      --
  */
-
-
 TimeNode *TimeNode::head = NULL;
 
 typedef struct timenode {
@@ -80,7 +65,7 @@ typedef struct timenode {
     dbref   trig;           // triggering object
     // struct frame *fr;       // Muf interp
     // struct inst *where;     // Instruction pointer
-    class Interpeter *interp;
+    std::tr1::shared_ptr<Interpeter> interp;
     int     eventnum;       // event ID
 }      *timequeue;
 
@@ -115,7 +100,7 @@ valid_objref(dbref obj)
 
 static  timequeue
 alloc_timenode(int typ, int subtyp, time_t mytime, dbref player, dbref loc,
-               dbref trig, dbref program, class Interpeter *interp,
+               dbref trig, dbref program, std::tr1::shared_ptr<Interpeter> interp,
                const char *strdata, const char *strcmd, const char *str3,
                timequeue nextone)
 {
@@ -151,8 +136,10 @@ free_timenode(timequeue ptr)
     if (ptr->called_data) free(ptr->called_data);
     if (ptr->str3) free(ptr->str3);
     if (ptr->interp) {
-        delete ptr->interp;
-        ptr->interp = NULL;
+
+        // delete ptr->interp;
+        // ptr->interp = NULL;
+        ptr->interp.reset();
 
         // Muf stuff, moved to destructor
         // if (ptr->fr->multitask != BACKGROUND)
@@ -201,7 +188,7 @@ control_process(dbref player, int count)
 
 int
 add_event(int event_typ, int subtyp, int dtime, dbref player, dbref loc,
-          dbref trig, dbref program, class Interpeter *interp,
+          dbref trig, dbref program, std::tr1::shared_ptr<Interpeter> interp,
           const char *strdata, const char *strcmd, const char *str3)
 {
     timequeue ptr = tqhead;
@@ -232,7 +219,7 @@ add_event(int event_typ, int subtyp, int dtime, dbref player, dbref loc,
     if (process_count > tp_max_process_limit ||
             (mypids > tp_max_plyr_processes && !Wizard(OWNER(player)))) {
         if (interp) {
-            delete interp;
+            interp.reset();
             // if (fr->multitask != BACKGROUND)
             //     DBFETCH(player)->sp.player.block = 0;
             // prog_clean(fr);
@@ -272,19 +259,21 @@ add_mpi_event(int delay, dbref player, dbref loc, dbref trig,
               const char *mpi, const char *cmdstr, const char *argstr,
               int listen_p, int omesg_p)
 {
-    int subtyp = TQ_MPI_QUEUE;
+    std::tr1::shared_ptr<Interpeter> empty_interp;
+
+    int subtyp = TQ_QUEUE;
 
     if (delay >= 1) {
-        subtyp = TQ_MPI_DELAY;
+        subtyp = TQ_DELAY;
     }
     if (listen_p)  {
-        subtyp |= TQ_MPI_LISTEN;
+        subtyp |= TQ_LISTEN;
     }
     if (omesg_p) {
-        subtyp |= TQ_MPI_OMESG;
+        subtyp |= TQ_OMESG;
     }
     return add_event(TQ_MPI_TYP, subtyp, delay, player, loc, trig,
-                     NOTHING, NULL, mpi, cmdstr, argstr);
+                     NOTHING, empty_interp, mpi, cmdstr, argstr);
 }
 
 
@@ -292,8 +281,10 @@ int
 add_muf_queue_event(dbref player, dbref loc, dbref trig, dbref prog,
                     const char *argstr, const char *cmdstr, int listen_p)
 {
-    return add_event(TQ_MUF_TYP, (listen_p? TQ_LISTEN: TQ_QUEUE), 0,
-                     player, loc, trig, prog, NULL, argstr, cmdstr, NULL);
+    std::tr1::shared_ptr<Interpeter> empty_interp;
+
+   return add_event(TQ_MUF_TYP, (listen_p? TQ_LISTEN: TQ_QUEUE), 0,
+                     player, loc, trig, prog, empty_interp, argstr, cmdstr, NULL);
 }
 
 
@@ -302,14 +293,16 @@ add_muf_delayq_event(int delay, dbref player, dbref loc, dbref trig,
                     dbref prog, const char *argstr, const char *cmdstr,
                     int listen_p)
 {
+    std::tr1::shared_ptr<Interpeter> empty_interp;
+
     return add_event(TQ_MUF_TYP, (listen_p? TQ_LISTEN: TQ_QUEUE),
-                     delay, player, loc, trig, prog, NULL, argstr, cmdstr,
+                     delay, player, loc, trig, prog, empty_interp, argstr, cmdstr,
                      NULL);
 }
 
 
 int
-add_muf_read_event(dbref player, dbref prog, class Interpeter *interp, dbref trig)
+add_muf_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpeter> interp, dbref trig)
 {
     FLAGS(player) |= (INTERACTIVE | READMODE);
     return add_event(TQ_MUF_TYP, TQ_READ, -1, player, -1, /* fr->trig */ trig,
@@ -319,7 +312,7 @@ add_muf_read_event(dbref player, dbref prog, class Interpeter *interp, dbref tri
 
 int
 add_muf_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
-                    class Interpeter *interp, const char *mode)
+                    std::tr1::shared_ptr<Interpeter> interp, const char *mode)
 {
     return add_event(TQ_MUF_TYP, TQ_DELAY, delay, player, loc, trig,
                      prog, interp, mode, NULL, NULL);
@@ -328,7 +321,7 @@ add_muf_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
 void
 handle_read_event(dbref player, const char *command)
 {
-    class Interpeter *interp;
+    std::tr1::shared_ptr<Interpeter> interp;
     timequeue ptr, lastevent;
     // int flag;
     dbref prog;
@@ -368,7 +361,8 @@ handle_read_event(dbref player, const char *command)
         ptr = ptr->next;
 
         /* Make SURE not to let the program frame get freed.  We need it. */
-        lastevent->interp = NULL;
+        // No longer required with shared_ptr
+        // lastevent->interp = NULL;
 
         /*
          * Free up the READ timequeue node
@@ -376,14 +370,13 @@ handle_read_event(dbref player, const char *command)
          */
         free_timenode(lastevent);
 
-
         /*
          * Handle @Q
          */
         if (!string_compare(command, BREAK_COMMAND)) {
 
             /* Whoops!  The user typed @Q.  Free the frame and exit. */
-            delete interp;
+            // delete interp; // Not needed with shared_ptr
             notify_nolisten(player, "Program aborted.", 1);
             return;
         }
@@ -398,7 +391,7 @@ handle_read_event(dbref player, const char *command)
          * If there are any, set the READ related flags.
          */
         while (ptr) {
-            if (ptr->typ == TQ_MUF_TYP && ptr->subtyp == TQ_MUF_READ) {
+            if (ptr->subtyp == TQ_READ) {
                 if (ptr->uid == player) {
                     FLAGS(player) |= (INTERACTIVE | READMODE);
                 }
@@ -425,7 +418,7 @@ next_timequeue_event()
     }
 
     while (tqhead && (tqhead != lastevent) && (maxruns--)) {
-        if (/*tqhead->typ == TQ_MUF_TYP && */ tqhead->subtyp == TQ_MUF_READ) {
+        if (tqhead->subtyp == TQ_READ) {
             break;
         }
         event = tqhead;
@@ -438,13 +431,13 @@ next_timequeue_event()
 
             strcpy(match_args, event->str3? event->str3 : "");
             strcpy(match_cmdname, event->command? event->command : "");
-            ival = (event->subtyp & TQ_MPI_OMESG)?
+            ival = (event->subtyp & TQ_OMESG)?
                     MPI_ISPUBLIC : MPI_ISPRIVATE;
-            if (event->subtyp & TQ_MPI_LISTEN) {
+            if (event->subtyp & TQ_LISTEN) {
                 ival |= MPI_ISLISTENER;
                 do_parse_mesg(event->uid, event->trig, event->called_data,
                               "(MPIlisten)", cbuf, ival);
-            } else if ((event->subtyp & TQ_MPI_SUBMASK) == TQ_MPI_DELAY) {
+            } else if ((event->subtyp & TQ_SUBMASK) == TQ_DELAY) {
                 do_parse_mesg(event->uid, event->trig, event->called_data,
                               "(MPIdelay)", cbuf, ival);
             } else {
@@ -452,7 +445,7 @@ next_timequeue_event()
                               "(MPIqueue)", cbuf, ival);
             }
             if (*cbuf) {
-                if (!(event->subtyp & TQ_MPI_OMESG)) {
+                if (!(event->subtyp & TQ_OMESG)) {
                     notify_nolisten(event->uid, cbuf, 1);
                 } else {
                     char bbuf[BUFFER_LEN];
@@ -470,7 +463,7 @@ next_timequeue_event()
             }
         } else if (event->typ != TQ_MPI_TYP) {
             if (Typeof(event->called_prog) == TYPE_PROGRAM) {
-                if (event->subtyp == TQ_MUF_DELAY) {
+                if (event->subtyp == TQ_DELAY) {
                     tmpcp = DBFETCH(event->uid)->sp.player.curr_prog;
                     tmpbl = DBFETCH(event->uid)->sp.player.block;
                     //tmpfg = (event->fr->multitask != BACKGROUND);
@@ -492,7 +485,8 @@ next_timequeue_event()
         }
         // Should we really be saving the interpeter here?
         // event->fr = NULL;
-        event->interp = NULL;
+        // event->interp = NULL;
+        // Trust the shared_ptr, it's your friend.
         free_timenode(event);
         process_count--;
     }
@@ -566,14 +560,14 @@ list_events(dbref player)
             (void) sprintf(buf, "%8d %4s   --   MPI   -- #%-6d %-16s \"%.512s\"",
                            ptr->eventnum, buf2, ptr->trig, NAME(ptr->uid),
                            ptr->called_data);
-        } else if (ptr->subtyp == TQ_MUF_DELAY) {
+        } else if (ptr->subtyp == TQ_DELAY) {
             (void) sprintf(buf, "%8d %4s %4s %5ld %4.1f #%-6d %-16s %.512s",
                            ptr->eventnum, buf2,
                            time_format_2((long) etime),
                            (ptr->interp->get_instruction_count() / 1000), pcnt,
                            ptr->called_prog, NAME(ptr->uid),
                            ptr->called_data);
-        } else if (ptr->subtyp == TQ_MUF_READ) {
+        } else if (ptr->subtyp == TQ_READ) {
             (void) sprintf(buf, "%8d %4s %4s %5ld %4.1f #%-6d %-16s %.512s",
                            ptr->eventnum, "--",
                            time_format_2((long) etime),
@@ -643,7 +637,7 @@ dequeue_prog(dbref program, int sleeponly)
         }
     }
     for (ptr = tqhead; ptr; ptr = ptr->next) {
-        if (ptr->typ == TQ_MUF_TYP && ptr->subtyp == TQ_MUF_READ) {
+        if (ptr->subtyp == TQ_READ) {
             FLAGS(ptr->uid) |= (INTERACTIVE | READMODE);
         }
     }
@@ -673,7 +667,7 @@ dequeue_process(int pid)
     free_timenode(ptr);
     process_count--;
     for (ptr = tqhead; ptr; ptr = ptr->next) {
-        if (ptr->typ == TQ_MUF_TYP && ptr->subtyp == TQ_MUF_READ) {
+        if (ptr->subtyp == TQ_READ) {
             FLAGS(ptr->uid) |= (INTERACTIVE | READMODE);
         }
     }

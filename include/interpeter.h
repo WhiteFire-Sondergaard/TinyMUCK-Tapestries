@@ -6,6 +6,7 @@
 #define _interpeter_h_included_
 
 #include <sys/time.h>
+#include <tr1/memory>
 
 
 class InterpeterReturnValue; // forward declration
@@ -59,7 +60,7 @@ public:
 	/* 
 	Factory for creating execution environments 
 	*/
-	static Interpeter *create_interp(dbref player, dbref location, dbref program,
+	static std::tr1::shared_ptr<Interpeter> create_interp(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property);
 
 protected:
