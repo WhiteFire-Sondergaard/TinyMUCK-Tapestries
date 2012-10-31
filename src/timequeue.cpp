@@ -49,7 +49,7 @@
  *  dmuf   0    2   when  user  loc    trig  prog  frame  mode  --      --
  *  rmuf   0    3   -1    user  loc    trig  prog  frame  mode  --      --
  */
-TimeNode *TimeNode::head = NULL;
+//TimeNode *TimeNode::head = NULL;
 
 typedef struct timenode {
     struct timenode *next;  // Linked list
@@ -278,7 +278,7 @@ add_mpi_event(int delay, dbref player, dbref loc, dbref trig,
 
 
 int
-add_muf_queue_event(dbref player, dbref loc, dbref trig, dbref prog,
+add_prog_queue_event(dbref player, dbref loc, dbref trig, dbref prog,
                     const char *argstr, const char *cmdstr, int listen_p)
 {
     std::tr1::shared_ptr<Interpeter> empty_interp;
@@ -289,7 +289,7 @@ add_muf_queue_event(dbref player, dbref loc, dbref trig, dbref prog,
 
 
 int
-add_muf_delayq_event(int delay, dbref player, dbref loc, dbref trig,
+add_prog_delayq_event(int delay, dbref player, dbref loc, dbref trig,
                     dbref prog, const char *argstr, const char *cmdstr,
                     int listen_p)
 {
@@ -302,16 +302,16 @@ add_muf_delayq_event(int delay, dbref player, dbref loc, dbref trig,
 
 
 int
-add_muf_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpeter> interp, dbref trig)
+add_prog_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpeter> interp, dbref trig)
 {
     FLAGS(player) |= (INTERACTIVE | READMODE);
     return add_event(TQ_MUF_TYP, TQ_READ, -1, player, -1, /* fr->trig */ trig,
                      prog, interp, "READ", NULL, NULL);
 }
-
+ 
 
 int
-add_muf_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
+add_prog_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
                     std::tr1::shared_ptr<Interpeter> interp, const char *mode)
 {
     return add_event(TQ_MUF_TYP, TQ_DELAY, delay, player, loc, trig,
@@ -983,7 +983,7 @@ listenqueue(dbref player, dbref where, dbref trigger, dbref what, dbref xclude,
                             (mt? "Listen" : "Olisten"), toparg, 1, (mt == 0));
                 }
             } else if (the_prog != NOTHING) {
-                add_muf_queue_event(player, where, trigger, the_prog, toparg,
+                add_prog_queue_event(player, where, trigger, the_prog, toparg,
                                     "(_Listen)", 1);
             }
         }

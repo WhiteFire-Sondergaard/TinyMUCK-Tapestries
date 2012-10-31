@@ -7,6 +7,8 @@
 #define _MLUA_H
 
 #include "lua.hpp" /* Some stuff requires this */
+#include "interpeter.h"
+#include <tr1/memory>
 
 /* TODO:
  *
@@ -88,6 +90,8 @@ struct mlua_interp	/* Mlua interpeter environment, */
 
     char *command;	/* malloced string with command */
     char *prop;		/* malloced string with prop run */
+
+    std::tr1::weak_ptr<Interpeter> interpeter;
 };
 
 /* 

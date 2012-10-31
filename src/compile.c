@@ -17,6 +17,8 @@
 #include <ctype.h>
 #include <time.h>
 
+#include "timenode.hpp"
+
 /* This file contains code for doing "byte-compilation" of
    mud-forth programs.  As such, it contains many internal
    data structures and other such which are not found in other
@@ -463,7 +465,7 @@ do_compile(dbref player_in, dbref program_in)
     /* restart AUTOSTART program. */
     time(&current_systime);
     if ((FLAGS(program) & ABODE) && TrueWizard(OWNER(program)))
-	add_muf_queue_event(OWNER(program), NOTHING, NOTHING, program,
+	add_prog_queue_event(OWNER(program), NOTHING, NOTHING, program,
 			    "Startup", "Queued Event.", 0);
 }
 

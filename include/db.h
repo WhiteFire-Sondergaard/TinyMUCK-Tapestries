@@ -388,6 +388,9 @@ struct debuggerdata {
 #define STD_SETUID 1
 #define STD_HARDUID 2
 
+#include <interpeter.h>
+
+
 /* frame data structure necessary for executing programs */
 struct frame {
     struct frame *next;
@@ -410,6 +413,7 @@ struct frame {
     struct debuggerdata brkpt;  /* info the debugger needs */
     struct timeval proftime;    /* profiling timing code */
     struct timeval totaltime;   /* profiling timing code */
+    std::tr1::weak_ptr<Interpeter> interpeter;
 };
 
 

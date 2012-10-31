@@ -458,8 +458,16 @@ trigger(dbref player, dbref exit, int pflag)
 		}
 		break;
 	    case TYPE_PROGRAM:
-		(void) create_and_run_interp_frame(player, DBFETCH(player)->location, dest, exit,
+        std::tr1::shared_ptr<Interpeter> i = 
+          Interpeter::create_interp(
+            player, DBFETCH(player)->location, dest, 
+            exit, FOREGROUND, STD_REGUID, 
+            MLUA_EVENT_CMD, NULL);
+        i->resume(NULL);
+/*
+		    (void) create_and_run_interp_frame(player, DBFETCH(player)->location, dest, exit,
 			      FOREGROUND, STD_REGUID, 0);
+*/
 		return;
 	}
     }

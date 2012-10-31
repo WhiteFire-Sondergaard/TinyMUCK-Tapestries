@@ -8,13 +8,15 @@
 #include <sys/time.h>
 #include <tr1/memory>
 
-
+class Interpeter; // more forward declration
 class InterpeterReturnValue; // forward declration
+
+#include "mlua.h"
 
 /* 	The interpeter class itself is an abstract class that defines an API
 	for the various language classess to fill.
 */
-class Interpeter
+class Interpeter : public std::tr1::enable_shared_from_this<Interpeter>
 {
 public:
 	/* 
@@ -60,8 +62,10 @@ public:
 	/* 
 	Factory for creating execution environments 
 	*/
-	static std::tr1::shared_ptr<Interpeter> create_interp(dbref player, dbref location, dbref program,
-       dbref source, int nosleeps, int whichperms, int event, const char *property);
+	static std::tr1::shared_ptr<Interpeter> create_interp(
+		  dbref player, dbref location, dbref program,
+      dbref source, int nosleeps, int whichperms, 
+      int event, const char *property);
 
 protected:
 	int pid; // process id
@@ -103,6 +107,10 @@ public:
        dbref source, int nosleeps, int whichperms, int event, 
        const char *property);
 
+	MUFInterpeter(dbref player, dbref location, dbref program,
+       dbref source, int nosleeps, int whichperms, int event, 
+       const char *property, struct frame *new_frame);
+
 	~MUFInterpeter();
 private:
 	// Things required to set this up.
@@ -135,14 +143,17 @@ public:
 	long get_instruction_count();
 	
 	// 
-	bool has_refs(dbref program) { return FALSE; };
+	bool has_refs(dbref program) { return false; };
 
 	// 
-	bool get_number_of_references(dbref program) { return FALSE; };
+	bool get_number_of_references(dbref program) { return false; };
 
 	LuaInterpeter(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, 
        const char *property);
+
+	~LuaInterpeter();
+
 private:
 	void totaltime_start();
 	void totaltime_stop();

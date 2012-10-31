@@ -94,6 +94,12 @@ LuaInterpeter::LuaInterpeter(dbref player, dbref location, dbref program,
 
     this->fr = mlua_create_interp(program, property, location, player, 
             source, euid, mode, event);
+    this->fr->interpeter = shared_from_this();
+}
+
+LuaInterpeter::~LuaInterpeter()
+{
+    mlua_free_interp(this->fr);
 }
 
 const char *LuaInterpeter::type()
@@ -168,9 +174,19 @@ MUFInterpeter::MUFInterpeter(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property)
     : Interpeter(event, player)
 {
-    fr = create_interp_frame(player, location, program, source, nosleeps, whichperms);
+    this->fr = create_interp_frame(player, location, program, source, nosleeps, whichperms);
     this->player = player;
     this->program = program;
+    this->fr->interpeter = shared_from_this();
+}
+
+MUFInterpeter::MUFInterpeter(dbref player, dbref location, dbref program,
+       dbref source, int nosleeps, int whichperms, int event, const char *property, 
+       struct frame *new_frame)
+    : Interpeter(event, player)
+{
+    this->fr = new_frame;
+    this->fr->interpeter = shared_from_this();
 }
 
 const char *MUFInterpeter::type()

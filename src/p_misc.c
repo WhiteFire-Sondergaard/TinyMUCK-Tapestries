@@ -16,6 +16,9 @@
 #include "strings.h"
 #include "interp.h"
 
+#include "timenode.hpp"
+#include "interpeter.h"
+
 extern int force_level;
 
 
@@ -165,7 +168,7 @@ prim_queue(PRIM_PROTOTYPE)
     else
 	temproom = oper4->data.objref;
 
-    result = add_muf_delayq_event(oper3->data.number, player, temproom,
+    result = add_prog_delayq_event(oper3->data.number, player, temproom,
 		    NOTHING, oper2->data.objref, DoNullInd(oper1->data.string),
 		     "Queued Event.", 0);
 
@@ -267,6 +270,7 @@ prim_fork(PRIM_PROTOTYPE)
 {
     int     i, j;
     struct frame *tmpfr;
+    std::tr1::shared_ptr<Interpeter> interp;
 
     CHECKOP(0);
     CHECKOFLOW(1);
@@ -326,8 +330,13 @@ prim_fork(PRIM_PROTOTYPE)
     push(tmpfr->argument.st, &(tmpfr->argument.top),
 	 PROG_INTEGER, MIPSCAST & result);
 
-    result = add_muf_delay_event(0, player, NOTHING, NOTHING, program,
-				tmpfr, "BACKGROUND");
+    interp = std::tr1::shared_ptr<Interpeter>(new MUFInterpeter(
+        player, NOTHING, program,
+        NOTHING, NULL, NULL, NULL /* should be something to indicate fork */,
+        NULL, tmpfr));
+
+    result = add_prog_delay_event(0, player, NOTHING, NOTHING, program,
+				interp, "BACKGROUND");
 
     /* parent process gets the child's pid returned on the stack */
     if (!result)

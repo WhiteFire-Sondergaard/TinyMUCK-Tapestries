@@ -2,6 +2,11 @@
 #ifndef _timenode_h_included_
 #define _timenode_h_included_
 
+#include "interpeter.h"
+
+/* 
+ Not used yet. Future!
+
 class TimeNode {
 public:
     static const unsigned int MUF_TYP = 0;
@@ -33,5 +38,23 @@ public:
 
     static TimeNode *head;
 };
+
+*/
+
+int
+add_prog_queue_event(dbref player, dbref loc, dbref trig, dbref prog,
+                    const char *argstr, const char *cmdstr, int listen_p);
+
+int
+add_prog_delayq_event(int delay, dbref player, dbref loc, dbref trig,
+                    dbref prog, const char *argstr, const char *cmdstr,
+                    int listen_p);
+
+int
+add_prog_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpeter> interp, dbref trig);
+
+int
+add_prog_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
+                    std::tr1::shared_ptr<Interpeter> interp, const char *mode);
 
 #endif // !_timenode_h_included_

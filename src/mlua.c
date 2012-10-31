@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "mlua.h"
+#include "timenode.hpp"
 
 /* Stuff from timequeue.c */
 int add_lua_read_event(dbref player, dbref prog, struct mlua_interp *interp);
@@ -382,7 +383,8 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
             interp->inst_since_yield = 0;
             DBSTORE(interp->player, sp.player.curr_prog, interp->program);
             DBSTORE(interp->player, sp.player.block, 0);
-            add_lua_read_event(interp->player, interp->program, interp);
+            add_prog_read_event(interp->player, interp->program, 
+                interp->interpeter.lock(), interp->trigger);
             break;
 
         case MLUA_YIELD:
@@ -390,8 +392,8 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
             interp->inst_since_yield = 0;
             DBSTORE(interp->player, sp.player.block, 
                             (mlua_is_foreground(interp)));
-            add_lua_delay_event(0, interp->player, NOTHING, NOTHING,
-                  interp->program, interp,
+            add_prog_delay_event(0, interp->player, NOTHING, NOTHING,
+                  interp->program, interp->interpeter.lock(),
                   (mlua_is_foreground(interp)) ? "FOREGROUND" : "BACKGROUND");
             break;
 
@@ -399,8 +401,8 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
             interp->inst_since_yield = 0;
             DBSTORE(interp->player, sp.player.block, 
                             (mlua_is_foreground(interp)));
-            add_lua_delay_event(lua_tonumber(Lrunning, 1),
-                interp->player, NOTHING, NOTHING, interp->program, interp,
+            add_prog_delay_event(lua_tonumber(Lrunning, 1),
+                interp->player, NOTHING, NOTHING, interp->program, interp->interpeter.lock(),
                 "SLEEPING");
             break;
 
@@ -479,6 +481,9 @@ void mlua_free_interp(struct mlua_interp *interp)
     /* Free strings (properly, this should be done as a _gc method)  */
     if (interp->command) free(interp->command);
     if (interp->prop) free(interp->prop);
+
+    /* Free up our pointer to the interpeter wrapper */
+    interp->interpeter.reset();
 
     /* The interpeter will garbage collect the structure itself */
     lua_close(interp->L);
