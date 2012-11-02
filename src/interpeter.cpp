@@ -53,6 +53,8 @@ std::tr1::shared_ptr<Interpeter> Interpeter::create_interp(dbref player, dbref l
             nosleeps, whichperms, event, property));
     }
 
+    ret_interp->set_weak_pointer();
+
     return ret_interp;
 }
 
@@ -94,6 +96,11 @@ LuaInterpeter::LuaInterpeter(dbref player, dbref location, dbref program,
 
     this->fr = mlua_create_interp(program, property, location, player, 
             source, euid, mode, event);
+}
+
+// Why? because this may not be done during the constructor.
+void LuaInterpeter::set_weak_pointer()
+{
     this->fr->interpeter = shared_from_this();
 }
 
@@ -175,9 +182,8 @@ MUFInterpeter::MUFInterpeter(dbref player, dbref location, dbref program,
     : Interpeter(event, player)
 {
     this->fr = create_interp_frame(player, location, program, source, nosleeps, whichperms);
-    this->player = player;
     this->program = program;
-    this->fr->interpeter = shared_from_this();
+//    this->fr->interpeter = shared_from_this();
 }
 
 MUFInterpeter::MUFInterpeter(dbref player, dbref location, dbref program,
@@ -185,7 +191,13 @@ MUFInterpeter::MUFInterpeter(dbref player, dbref location, dbref program,
        struct frame *new_frame)
     : Interpeter(event, player)
 {
+    this->program = program;
     this->fr = new_frame;
+}
+
+// Why? because this may not be done during the constructor.
+void MUFInterpeter::set_weak_pointer()
+{
     this->fr->interpeter = shared_from_this();
 }
 
@@ -273,7 +285,7 @@ void MUFInterpeter::handle_read_event(const char *command)
     if (this->fr->brkpt.debugging && !this->fr->brkpt.isread) {
 
         /* We're in the MUF debugger!  Call it with the input line. */
-        if(muf_debugger(this->player, this->program, command, this->fr)) {
+        if(muf_debugger(this->uid, this->program, command, this->fr)) {
 
             /* MUF Debugger exited.  Free up the program frame & exit */
             prog_clean(this->fr);
@@ -285,7 +297,7 @@ void MUFInterpeter::handle_read_event(const char *command)
          * INTERACTIVE bit on the user, if it does NOT want the MUF
          * program to resume executing.
          */
-        if (!(FLAGS(player) & INTERACTIVE)) {
+        if (!(FLAGS(this->uid) & INTERACTIVE)) {
             this->resume(NULL);
         }
 
@@ -304,8 +316,8 @@ void MUFInterpeter::resume(const char *str)
              * Uh oh! That MUF program's stack is full!
              * Print an error, free the frame, and exit.
              */
-            notify_nolisten(this->player, "Program stack overflow.", 1);
-            prog_clean(this->fr);
+            notify_nolisten(this->uid, "Program stack overflow.", 1);
+            //prog_clean(this->fr);
             return;
         }
         
@@ -317,7 +329,7 @@ void MUFInterpeter::resume(const char *str)
             alloc_prog_string(str);
     }
 
-    interp_loop(this->player, this->program, this->fr, 0);
+    interp_loop(this->uid, this->program, this->fr, 0);
 }
 
 /* --------------------------------------------------------------------------------------

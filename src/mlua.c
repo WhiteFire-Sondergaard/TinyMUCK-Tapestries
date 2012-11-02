@@ -21,15 +21,26 @@
 #include "mlua.h"
 #include "timenode.hpp"
 
-/* Stuff from timequeue.c */
-int add_lua_read_event(dbref player, dbref prog, struct mlua_interp *interp);
-int add_lua_delay_event(int delay, dbref player, dbref loc, dbref trig,
-                dbref prog, struct mlua_interp *interp, const char *mode);
-
 /*
  * PID stuff. Should be a functioncall to somewhere. This is kinda lame.
  */
 extern int top_pid;
+
+/*
+ * Lua stack dump
+ */
+void mlua_dump_stack(lua_State *L, dbref player, const char *title)
+{
+    char buf[BUFFER_LEN]; 
+    int i;
+    sprintf(buf, "Dumping Lua Stack at: %s", title);
+    notify_nolisten(player, buf, 1);
+    for (i = 1; i <= lua_gettop(L); i++)
+    {
+        sprintf(buf, "%2d: %-10s: %s", i, lua_typename(L, lua_type(L, i)), lua_tostring(L, i));
+        notify_nolisten(player, buf, 1);
+    }
+}
 
 /*
  * State to Interpeter
@@ -229,6 +240,8 @@ static int load_program(lua_State *L, dbref program, dbref player)
         return FALSE;
     }
 
+    //mlua_dump_stack(L, player, "post-load");
+
     return TRUE;
 }
 
@@ -273,27 +286,41 @@ struct mlua_interp *mlua_create_interp(
     }
 
     /* Setup environment */
+    //mlua_dump_stack(L, player, "Before libs...");
 
     /* lua builtin libraries */
-    luaopen_base(L);
+    luaopen_base(L); lua_remove(L, -1);
+    //mlua_dump_stack(L, player, "Post base...");
+
     /* need to overwrite some dangerous functions provide by base... */
     lua_pushnil(L); lua_setglobal(L, "loadfile");
     lua_pushnil(L); lua_setglobal(L, "dofile");
     lua_pushnil(L); lua_setglobal(L, "require");
     lua_pushnil(L); lua_setglobal(L, "print");
     lua_pushnil(L); lua_setglobal(L, "coroutine");
-    luaopen_table(L);
-    luaopen_string(L);
-    luaopen_math(L);
+    luaopen_table(L); lua_remove(L, -1);
+    luaopen_string(L); lua_remove(L, -1);
+    luaopen_math(L); lua_remove(L, -1);
+
+    //mlua_dump_stack(L, player, "Post lua libs...");
 
     /* open the mud lua libs */ 
     mlua_base_open(L);
-    mlua_open_mdb(L);
+
+    //mlua_dump_stack(L, player, "Post mlua base...");
+
+    mlua_open_mdb(L); lua_remove(L, -1);
+
+    //mlua_dump_stack(L, player, "Post libs...");
 
     /* create a table to store hidded data in the registery */
     lua_pushstring(L, "mlua_interp");
-    interp = (mlua_interp *)lua_newuserdata(L, sizeof(struct mlua_interp));
+    interp = new mlua_interp;
+    lua_pushlightuserdata(L, interp);
+    //interp = (mlua_interp *)lua_newuserdata(L, sizeof(struct mlua_interp));
     lua_settable(L, LUA_REGISTRYINDEX);
+
+    //mlua_dump_stack(L, player, "Post interp...");
 
     /* Fill the interp table */
     interp->L = L;
@@ -316,13 +343,13 @@ struct mlua_interp *mlua_create_interp(
     interp->prop = NULL;
 
     /* Provide arguments if the program is running as a command */
-    if (!*match_cmdname)
+    if (*match_cmdname)
     {
         lua_pushstring(interp->L, match_cmdname);
         lua_setglobal(interp->L, "command");
     }
 
-    if (!*match_args)
+    if (*match_args)
     {
         lua_pushstring(interp->L, match_args);
         lua_setglobal(interp->L, "args");
@@ -336,7 +363,7 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
 {
     int error;
     int nargs = 0;
-    lua_State *L;
+    //lua_State *L;
     lua_State *Lrunning = interp->L;
 
     /* The program may be passed an arg when it starts or when resuming
@@ -347,6 +374,8 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
         lua_pushstring(Lrunning, resume_arg);
         nargs = 1;
     }
+
+    //mlua_dump_stack(Lrunning, interp->player, "in resume()");
 
     /* reset sleeping flag */
     interp->why_sleep = MLUA_NOTSLEEPING;
@@ -360,7 +389,7 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
     else
     {
         /* Calls are not threads because they can not suspend. */
-        L = interp->L;
+        //L = interp->L;
         error = lua_pcall(Lrunning, nargs, /*nresults*/0, /*errfunc*/0);
     }
 
@@ -371,8 +400,9 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
     }
     if (error == LUA_ERRRUN)
     {
+        notify_nolisten(interp->player, "Lua Runtime Error:", 1);
         notify_nolisten(interp->player, lua_tostring(Lrunning, -1), 1);
-        mlua_free_interp(interp); /* Interpeter now self-destructs */
+        //mlua_free_interp(interp); /* Interpeter now self-destructs */
         return FALSE;
     }
 
@@ -410,7 +440,7 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
         case MLUA_FIRSTRUN:
         default:
             /* We are done. */
-            mlua_free_interp(interp);
+            //mlua_free_interp(interp);
             break;
     }
 

@@ -280,7 +280,8 @@ prim_fork(PRIM_PROTOTYPE)
 
     fr->pc = pc;
 
-    tmpfr = (struct frame *) calloc(1, sizeof(struct frame));
+    //tmpfr = (struct frame *) calloc(1, sizeof(struct frame));
+    tmpfr = new frame;
 
     tmpfr->system.top = fr->system.top;
     for (i = 0; i < fr->system.top; i++)

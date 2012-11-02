@@ -49,6 +49,9 @@ public:
 	// 
 	virtual bool get_number_of_references(dbref program) = 0;
 
+	//
+	virtual void set_weak_pointer() = 0;
+
 	/*
 	 * Stuff that is global
 	 */
@@ -103,6 +106,9 @@ public:
 	// 
 	bool get_number_of_references(dbref program);
 
+	//
+	void set_weak_pointer();
+
 	MUFInterpeter(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, 
        const char *property);
@@ -115,7 +121,6 @@ public:
 private:
 	// Things required to set this up.
 	struct frame *fr;
-	dbref player;
 	dbref program;
 };
 
@@ -147,6 +152,9 @@ public:
 
 	// 
 	bool get_number_of_references(dbref program) { return false; };
+
+	//
+	void set_weak_pointer();
 
 	LuaInterpeter(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, 

@@ -111,7 +111,8 @@ alloc_timenode(int typ, int subtyp, time_t mytime, dbref player, dbref loc,
         free_timenode_list = ptr->next;
         free_timenode_count--;
     } else {
-        ptr = (timequeue) malloc(sizeof(struct timenode));
+        ptr = new timenode;
+        // ptr = (timequeue) malloc(sizeof(struct timenode));
     }
     ptr->typ = typ;
     ptr->subtyp = subtyp;
@@ -119,7 +120,10 @@ alloc_timenode(int typ, int subtyp, time_t mytime, dbref player, dbref loc,
     ptr->uid = player;
     ptr->loc = loc;
     ptr->trig = trig;
-    ptr->interp = interp;
+    if (interp)
+        ptr->interp = interp;
+    else
+        ptr->interp.reset();
     ptr->called_prog = program;
     ptr->called_data = (char *) string_dup((char *) strdata);
     ptr->command = alloc_string(strcmd);
@@ -296,8 +300,9 @@ add_prog_delayq_event(int delay, dbref player, dbref loc, dbref trig,
     std::tr1::shared_ptr<Interpeter> empty_interp;
 
     return add_event(TQ_MUF_TYP, (listen_p? TQ_LISTEN: TQ_QUEUE),
-                     delay, player, loc, trig, prog, empty_interp, argstr, cmdstr,
-                     NULL);
+                     delay, player, loc, trig, prog, 
+                     empty_interp, 
+                     argstr, cmdstr, NULL);
 }
 
 
@@ -461,9 +466,9 @@ next_timequeue_event()
                     }
                 }
             }
-        } else if (event->typ != TQ_MPI_TYP) {
+        } else {
             if (Typeof(event->called_prog) == TYPE_PROGRAM) {
-                if (event->subtyp == TQ_DELAY) {
+                if (event->interp && event->subtyp == TQ_DELAY) {
                     tmpcp = DBFETCH(event->uid)->sp.player.curr_prog;
                     tmpbl = DBFETCH(event->uid)->sp.player.block;
                     //tmpfg = (event->fr->multitask != BACKGROUND);
@@ -474,12 +479,22 @@ next_timequeue_event()
                         DBFETCH(event->uid)->sp.player.block = tmpbl;
                     }
                 } else {
+                    // OMG are we really passing stuff in globals? QQ
                     strcpy(match_args,
                             event->called_data? event->called_data : "");
                     strcpy(match_cmdname,
                             event->command? event->command : "");
-                    create_and_run_interp_frame(event->uid, event->loc, event->called_prog,
-                           event->trig, BACKGROUND, STD_HARDUID, 0);
+
+                    std::tr1::shared_ptr<Interpeter> i = 
+                        Interpeter::create_interp(
+                            event->uid, event->loc, event->called_prog, 
+                            event->trig, BACKGROUND, STD_HARDUID, 
+                            /* What event type is this? */ 0, NULL);
+                    i->resume(NULL);
+
+                    //create_and_run_interp_frame(event->uid, event->loc, 
+                    //       event->called_prog,
+                    //       event->trig, BACKGROUND, STD_HARDUID, 0);
                 }
             }
         }
@@ -756,9 +771,9 @@ do_dequeue(dbref player, const char *arg1)
 /* Checks the MUF timequeue for address references on the stack or */
 /* dbref references on the callstack */
 static int
-has_refs(dbref program, timequeue ptr)
+has_refs(dbref program, struct timenode *ptr)
 {
-    if (ptr->interp)
+    if ((bool)ptr->interp)
         return ptr->interp->has_refs(program);
 
     return FALSE;

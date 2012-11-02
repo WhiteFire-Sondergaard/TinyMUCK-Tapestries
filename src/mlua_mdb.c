@@ -87,6 +87,7 @@ static const luaL_Reg lib_mdb[] = {
 int mlua_open_mdb (lua_State *L) {
     createmeta(L);
     luaL_newlib(L, lib_mdb);
+    lua_remove(L, -1);
     return 1;
 }
 

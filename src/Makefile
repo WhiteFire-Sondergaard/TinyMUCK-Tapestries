@@ -23,7 +23,7 @@
 #			alwase "strip netmuck" if you want the space.
 # -Wall -pedantic	Good way to get spammed with warnings from GCC.
 #
-OPTIM= -O -g -Wno-write-strings
+OPTIM= -O0 -g -Wno-write-strings
 
 #
 # Paths

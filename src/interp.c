@@ -149,10 +149,11 @@ create_interp_frame(dbref player, dbref location, dbref program,
 	return 0;
 	}
 	if (free_frames_list) {
-	fr = free_frames_list;
-	free_frames_list = fr->next;
+	   fr = free_frames_list;
+	   free_frames_list = fr->next;
 	} else {
-	fr = (struct frame *) malloc(sizeof(struct frame));
+        fr = new frame;
+        //fr = (struct frame *) malloc(sizeof(struct frame));
 	}
 	fr->next = NULL;
 	fr->pid = top_pid++;
@@ -253,10 +254,10 @@ prog_clean(struct frame * fr)
 	struct frame *ptr;
 
 	for(ptr = free_frames_list; ptr; ptr = ptr->next) {
-	if (ptr == fr) {
-		fprintf(stderr, "prog_clean(): Tried to free an already freed program frame!\n");
-		abort();
-	}
+    	if (ptr == fr) {
+    		fprintf(stderr, "prog_clean(): Tried to free an already freed program frame!\n");
+    		abort();
+    	}
 	}
 
 	fr->system.top = 0;
@@ -392,7 +393,7 @@ do_abort_loop(dbref player, dbref program, const char *msg,
 	notify_nolisten(player, msg, 1);
 	}
 	interp_depth--;
-	prog_clean(fr);
+	//prog_clean(fr);
 	DBSTORE(player, sp.player.block, 0);
 }
 
@@ -794,7 +795,7 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 	}                       /* switch */
 	if (err) {
 		reload(fr, atop, stop);
-		prog_clean(fr);
+		//prog_clean(fr);
 		DBSTORE(player, sp.player.block, 0);
 		interp_depth--;
 		calc_profile_timing(program,fr);
@@ -816,13 +817,13 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 		}
 	}
 	reload(fr, atop, stop);
-	prog_clean(fr);
+	//prog_clean(fr);
 	interp_depth--;
 	calc_profile_timing(program,fr);
 	return rv;
 	}
 	reload(fr, atop, stop);
-	prog_clean(fr);
+	//prog_clean(fr);
 	interp_depth--;
 	calc_profile_timing(program,fr);
 	return NULL;

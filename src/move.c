@@ -458,12 +458,12 @@ trigger(dbref player, dbref exit, int pflag)
 		}
 		break;
 	    case TYPE_PROGRAM:
-        std::tr1::shared_ptr<Interpeter> i = 
-          Interpeter::create_interp(
-            player, DBFETCH(player)->location, dest, 
-            exit, FOREGROUND, STD_REGUID, 
-            MLUA_EVENT_CMD, NULL);
-        i->resume(NULL);
+            std::tr1::shared_ptr<Interpeter> i = 
+              Interpeter::create_interp(
+                player, DBFETCH(player)->location, dest, 
+                exit, FOREGROUND, STD_REGUID, 
+                MLUA_EVENT_CMD, NULL);
+            i->resume(NULL);
 /*
 		    (void) create_and_run_interp_frame(player, DBFETCH(player)->location, dest, exit,
 			      FOREGROUND, STD_REGUID, 0);
@@ -486,41 +486,43 @@ do_move(dbref player, const char *direction, int lev)
     struct match_data md;
 
     if (!string_compare(direction, "home")) {
-	/* send him home */
-	/* but steal all his possessions */
-	if ((loc = DBFETCH(player)->location) != NOTHING) {
-	    /* tell everybody else */
-	    sprintf(buf, "%s goes home.", PNAME(player));
-	    notify_except(DBFETCH(loc)->contents, player, buf, player);
-	}
-	/* give the player the messages */
-	notify(player, "There's no place like home...");
-	notify(player, "There's no place like home...");
-	notify(player, "There's no place like home...");
-	notify(player, "You wake up back home, without your possessions.");
-	send_home(player, 1);
+        /* send him home */
+        /* but steal all his possessions */
+        if ((loc = DBFETCH(player)->location) != NOTHING) {
+            /* tell everybody else */
+            sprintf(buf, "%s goes home.", PNAME(player));
+            notify_except(DBFETCH(loc)->contents, player, buf, player);
+        }
+        /* give the player the messages */
+        notify(player, "There's no place like home...");
+        notify(player, "There's no place like home...");
+        notify(player, "There's no place like home...");
+        notify(player, "You wake up back home, without your possessions.");
+        send_home(player, 1);
     } else {
-	/* find the exit */
-	init_match_check_keys(player, direction, TYPE_EXIT, &md);
-	md.match_level = lev;
-	match_all_exits(&md);
-	switch (exit = match_result(&md)) {
-	    case NOTHING:
-		notify(player, "You can't go that way.");
-		break;
-	    case AMBIGUOUS:
-		notify(player, "I don't know which way you mean!");
-		break;
-	    default:
-		/* we got one */
-		/* check to see if we got through */
-		ts_useobject(exit);
-		loc = DBFETCH(player)->location;
-		if (can_doit(player, exit, "You can't go that way.")) {
-		    trigger(player, exit, 1);
-		}
-		break;
-	}
+        /* find the exit */
+        init_match_check_keys(player, direction, TYPE_EXIT, &md);
+        md.match_level = lev;
+        match_all_exits(&md);
+        switch (exit = match_result(&md)) {
+            case NOTHING:
+                notify(player, "You can't go that way.");
+                break;
+
+            case AMBIGUOUS:
+                notify(player, "I don't know which way you mean!");
+                break;
+                
+            default:
+                /* we got one */
+                /* check to see if we got through */
+                ts_useobject(exit);
+                loc = DBFETCH(player)->location;
+                if (can_doit(player, exit, "You can't go that way.")) {
+                    trigger(player, exit, 1);
+                }
+                break;
+        }
     }
 }
 
