@@ -207,17 +207,15 @@ add_event(int event_typ, int subtyp, int dtime, dbref player, dbref loc,
 
     if (subtyp == TQ_READ) {
         process_count++;
-        if (lastevent) {
-            lastevent->next = alloc_timenode(event_typ, subtyp, rtime,
-                                             player, loc, trig, program, interp,
-                                             strdata, strcmd, str3, NULL);
-            return (lastevent->next->eventnum);
-        } else {
-            tqhead = alloc_timenode(event_typ, subtyp, rtime,
-                                     player, loc, trig, program, interp,
-                                     strdata, strcmd, str3, NULL);
-            return (tqhead->eventnum);
-        }
+        ptr = alloc_timenode(event_typ, subtyp, rtime,
+                             player, loc, trig, program, interp,
+                             strdata, strcmd, str3, NULL);
+        if (lastevent)
+            lastevent->next = ptr;
+        else
+            tqhead = ptr;
+        
+        return (ptr->eventnum);
     }
 
     if (process_count > tp_max_process_limit ||
@@ -468,7 +466,7 @@ next_timequeue_event()
             }
         } else {
             if (Typeof(event->called_prog) == TYPE_PROGRAM) {
-                if (event->interp && event->subtyp == TQ_DELAY) {
+                if (event->interp /* && event->subtyp == TQ_DELAY */) {
                     tmpcp = DBFETCH(event->uid)->sp.player.curr_prog;
                     tmpbl = DBFETCH(event->uid)->sp.player.block;
                     //tmpfg = (event->fr->multitask != BACKGROUND);
@@ -579,7 +577,9 @@ list_events(dbref player)
             (void) sprintf(buf, "%8d %4s %4s %5ld %4.1f #%-6d %-16s %.512s",
                            ptr->eventnum, buf2,
                            time_format_2((long) etime),
-                           (ptr->interp->get_instruction_count() / 1000), pcnt,
+                           ptr->interp ? 
+                                (ptr->interp->get_instruction_count() / 1000) : 0, 
+                           pcnt,
                            ptr->called_prog, NAME(ptr->uid),
                            ptr->called_data);
         } else if (ptr->subtyp == TQ_READ) {
@@ -883,8 +883,16 @@ propqueue(dbref player, dbref where, dbref trigger, dbref what, dbref xclude,
                 } else if (the_prog != NOTHING) {
                     strcpy(match_args, toparg? toparg : "");
                     strcpy(match_cmdname, "Queued event.");
-                    create_and_run_interp_frame(player, where, the_prog, trigger,
-                           BACKGROUND, STD_HARDUID, 0);
+                    //fprintf(stderr, "propqueue(#%d, %s)\n", the_prog, toparg ? toparg : "-N/A-");
+                    std::tr1::shared_ptr<Interpeter> i = 
+                        Interpeter::create_interp(
+                            player, where, the_prog, 
+                            trigger, BACKGROUND, STD_HARDUID, 
+                            /* What event type is this? */ 0, NULL);
+                    i->resume(NULL);
+
+                    //create_and_run_interp_frame(player, where, the_prog, trigger,
+                    //       BACKGROUND, STD_HARDUID, 0);
                 }
                 propq_level--;
             } else {

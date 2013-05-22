@@ -100,7 +100,7 @@ void    do_list_header(dbref player, dbref program);
 void    list_publics(dbref player, int arg[], int argc);
 void    do_list_publics(dbref player, dbref program);
 void    toggle_numbers(dbref player);
-
+int mlua_compile(dbref player, dbref program, int silent);
 /* Editor routines --- Also contains routines to handle input */
 
 /* This routine determines if a player is editing or running an interactive
@@ -341,6 +341,12 @@ editor(dbref player, const char *command)
 
     program = DBFETCH(player)->sp.player.curr_prog;
 
+#ifdef COMPRESS
+    const char *lang = uncompress(get_property_class(program, "~language"));
+#else
+    const char *lang = get_property_class(program, "~language");
+#endif
+
     /* check to see if we are insert mode */
     if (DBFETCH(player)->sp.player.insert_mode) {
         insert(player, command);/* insert it! */
@@ -423,7 +429,10 @@ editor(dbref player, const char *command)
                 break;
             case COMPILE_COMMAND:
                 /* compile code belongs in compile.c, not in the editor */
-                do_compile(player, program);
+                if (lang && (strcmp(lang, "Lua") == 0)) // Lua
+                    mlua_compile(player, program, FALSE);
+                else
+                    do_compile(player, program);
                 notify(player, "Compiler done.");
                 break;
             case LIST_COMMAND:

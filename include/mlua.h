@@ -110,7 +110,7 @@ struct mlua_interp *mlua_create_interp(
 /* This function resumes a suspended Lua program by being passed it's
  * interp structure.
  */
-int mlua_resume(struct mlua_interp *interp, const char *resume_arg);
+std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *interp, const char *resume_arg);
 
 /* Compile a program and store the data into the in-memory DB.
  * Optionally notify player of errors or success.

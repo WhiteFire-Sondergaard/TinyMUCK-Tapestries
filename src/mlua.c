@@ -259,7 +259,8 @@ struct mlua_interp *mlua_create_interp(
     int event)
 {
     lua_State *L;
-    struct mlua_interp *interp;
+    struct mlua_interp *interp = new struct mlua_interp;
+    interp->interpeter.reset(); // redundant, but just to be sure.
 
     /* Do some error checking */
     if (!property && Typeof(program) != TYPE_PROGRAM) return NULL;
@@ -280,6 +281,7 @@ struct mlua_interp *mlua_create_interp(
     } else {
         if (!load_program(L, program, player))
         {
+            //notify_nolisten(player, "Program not compilable.", 1);
             lua_close(L);
             return NULL;
         }
@@ -315,7 +317,6 @@ struct mlua_interp *mlua_create_interp(
 
     /* create a table to store hidded data in the registery */
     lua_pushstring(L, "mlua_interp");
-    interp = new mlua_interp;
     lua_pushlightuserdata(L, interp);
     //interp = (mlua_interp *)lua_newuserdata(L, sizeof(struct mlua_interp));
     lua_settable(L, LUA_REGISTRYINDEX);
@@ -359,11 +360,15 @@ struct mlua_interp *mlua_create_interp(
 }
 
 /* Resum or start a lua program. */
-int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
+std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *interp, const char *resume_arg)
 {
     int error;
     int nargs = 0;
     //lua_State *L;
+    std::tr1::shared_ptr<InterpeterReturnValue> ret_val;
+
+    if (!interp) return ret_val;
+
     lua_State *Lrunning = interp->L;
 
     /* The program may be passed an arg when it starts or when resuming
@@ -390,7 +395,7 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
     {
         /* Calls are not threads because they can not suspend. */
         //L = interp->L;
-        error = lua_pcall(Lrunning, nargs, /*nresults*/0, /*errfunc*/0);
+        error = lua_pcall(Lrunning, nargs, /*nresults*/1, /*errfunc*/0);
     }
 
     /* handle any errors */
@@ -403,7 +408,7 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
         notify_nolisten(interp->player, "Lua Runtime Error:", 1);
         notify_nolisten(interp->player, lua_tostring(Lrunning, -1), 1);
         //mlua_free_interp(interp); /* Interpeter now self-destructs */
-        return FALSE;
+        return ret_val;
     }
 
     /* Now, do we suspend again, or are we done? */
@@ -439,12 +444,13 @@ int mlua_resume(struct mlua_interp *interp, const char *resume_arg)
         case MLUA_NOTSLEEPING:
         case MLUA_FIRSTRUN:
         default:
+            // ret_val = 
             /* We are done. */
             //mlua_free_interp(interp);
             break;
     }
 
-    return TRUE;
+    return ret_val;
 }
 
 /* Called to start interpetation */
@@ -477,7 +483,7 @@ int mlua_run(
     if (!interp) return FALSE;
 
     /* execute code */
-    return mlua_resume(interp, NULL);
+    return mlua_resume(interp, NULL) ? TRUE : FALSE;
 }
 
 /*

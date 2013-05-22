@@ -32,7 +32,7 @@ public:
 	virtual bool background() = 0;
 
 	// Resume running program
-	virtual void resume(const char *) = 0;
+	virtual std::tr1::shared_ptr<InterpeterReturnValue> resume(const char *) = 0;
 
 	// Get totaltime for listings
 	virtual struct timeval *get_totaltime() = 0;
@@ -89,7 +89,7 @@ public:
 	bool background();
 
 	// Resume
-	void resume(const char *);
+	std::tr1::shared_ptr<InterpeterReturnValue> resume(const char *);
 
 	// Get totaltime for listings
 	struct timeval *get_totaltime();
@@ -136,7 +136,7 @@ public:
 	bool background();
 
 	// Resume
-	void resume(const char *);
+	std::tr1::shared_ptr<InterpeterReturnValue> resume(const char *);
 
 	// Get totaltime for listings
 	struct timeval *get_totaltime();

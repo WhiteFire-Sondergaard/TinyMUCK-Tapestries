@@ -4,7 +4,7 @@ i
 print("Command: ", command)
 print("Args:    ", args)
 f, e = load(args, command)
-if (not f)
+if (not f) then
   print("Code failed to compile: ", e)
 else
   pcall(f)

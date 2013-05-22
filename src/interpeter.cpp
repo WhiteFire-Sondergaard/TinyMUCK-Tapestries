@@ -101,12 +101,14 @@ LuaInterpeter::LuaInterpeter(dbref player, dbref location, dbref program,
 // Why? because this may not be done during the constructor.
 void LuaInterpeter::set_weak_pointer()
 {
-    this->fr->interpeter = shared_from_this();
+    if (this->fr)
+        this->fr->interpeter = shared_from_this();
 }
 
 LuaInterpeter::~LuaInterpeter()
 {
-    mlua_free_interp(this->fr);
+    if (this->fr)
+        mlua_free_interp(this->fr);
 }
 
 const char *LuaInterpeter::type()
@@ -125,11 +127,18 @@ void LuaInterpeter::handle_read_event(const char *command)
     // Um. What do we do now? Are we done? How do we know?
 }
 
-void LuaInterpeter::resume(const char *str)
+std::tr1::shared_ptr<InterpeterReturnValue> LuaInterpeter::resume(const char *str)
 {
+    std::tr1::shared_ptr<InterpeterReturnValue> irv;
+
     this->totaltime_start();
     mlua_resume(this->fr, str);
     this->totaltime_stop();
+
+    // Do something with irv
+
+
+    return irv;
 }
 
 void LuaInterpeter::totaltime_start()
@@ -306,8 +315,15 @@ void MUFInterpeter::handle_read_event(const char *command)
     }
 }
 
-void MUFInterpeter::resume(const char *str)
+// From interp.c
+void RCLEAR(struct inst * oper, char *file, int line);
+#define CLEAR(oper) RCLEAR(oper, __FILE__, __LINE__)
+
+std::tr1::shared_ptr<InterpeterReturnValue> MUFInterpeter::resume(const char *str)
 {
+    struct inst *rv;
+    std::tr1::shared_ptr<InterpeterReturnValue> irv;
+
     if (str)
     {
         if (this->fr->argument.top >= STACK_SIZE) {
@@ -318,7 +334,11 @@ void MUFInterpeter::resume(const char *str)
              */
             notify_nolisten(this->uid, "Program stack overflow.", 1);
             //prog_clean(this->fr);
-            return;
+            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::NIL,
+                    0
+                    ));
+            return irv;
         }
         
         /*
@@ -329,7 +349,67 @@ void MUFInterpeter::resume(const char *str)
             alloc_prog_string(str);
     }
 
-    interp_loop(this->uid, this->program, this->fr, 0);
+    rv = interp_loop(this->uid, this->program, this->fr, 0);
+
+    if (rv == NULL)
+    {
+        return std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::BOOL,
+                    FALSE
+                    ));
+    }
+
+    if ((int)rv == 1)
+    {
+        return std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::BOOL,
+                    TRUE
+                    ));
+    }
+
+    switch(rv->type) {
+        case PROG_STRING:
+            if (rv->data.string) {
+                irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::STRING,
+                    rv->data.string->data
+                    ));
+            } else {
+                irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::STRING,
+                    ""
+                    ));
+            }
+            break;
+
+        case PROG_INTEGER:
+            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::INTEGER,
+                    rv->data.number
+                    ));
+            break;
+
+        case PROG_OBJECT:
+            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::DBREF,
+                    rv->data.objref
+                    ));
+
+            // Note: MUF primitive returns a string, that needs to be handled
+            // in the muf primitive, not here. Though, it would be nice if 
+            // InterpeterReturnValue had a function to do this.
+            //ptr = ref2str(rv->data.objref, buf);
+            break;
+
+        default:
+            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::NIL,
+                    0
+                    ));
+            break;
+    }
+    CLEAR(rv);
+    return irv;
 }
 
 /* --------------------------------------------------------------------------------------
