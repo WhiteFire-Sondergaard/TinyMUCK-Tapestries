@@ -13,7 +13,7 @@
 #include "mlua.h"
 #include "props.h"
 #include "interface.h"
-#include "interpeter.h"
+#include "interpreter.h"
 #include "externs.h"
 #include "timenode.hpp"
 
@@ -65,7 +65,7 @@ typedef struct timenode {
     dbref   trig;           // triggering object
     // struct frame *fr;       // Muf interp
     // struct inst *where;     // Instruction pointer
-    std::tr1::shared_ptr<Interpeter> interp;
+    std::tr1::shared_ptr<Interpreter> interp;
     int     eventnum;       // event ID
 }      *timequeue;
 
@@ -100,7 +100,7 @@ valid_objref(dbref obj)
 
 static  timequeue
 alloc_timenode(int typ, int subtyp, time_t mytime, dbref player, dbref loc,
-               dbref trig, dbref program, std::tr1::shared_ptr<Interpeter> interp,
+               dbref trig, dbref program, std::tr1::shared_ptr<Interpreter> interp,
                const char *strdata, const char *strcmd, const char *str3,
                timequeue nextone)
 {
@@ -192,7 +192,7 @@ control_process(dbref player, int count)
 
 int
 add_event(int event_typ, int subtyp, int dtime, dbref player, dbref loc,
-          dbref trig, dbref program, std::tr1::shared_ptr<Interpeter> interp,
+          dbref trig, dbref program, std::tr1::shared_ptr<Interpreter> interp,
           const char *strdata, const char *strcmd, const char *str3)
 {
     timequeue ptr = tqhead;
@@ -261,7 +261,7 @@ add_mpi_event(int delay, dbref player, dbref loc, dbref trig,
               const char *mpi, const char *cmdstr, const char *argstr,
               int listen_p, int omesg_p)
 {
-    std::tr1::shared_ptr<Interpeter> empty_interp;
+    std::tr1::shared_ptr<Interpreter> empty_interp;
 
     int subtyp = TQ_QUEUE;
 
@@ -283,7 +283,7 @@ int
 add_prog_queue_event(dbref player, dbref loc, dbref trig, dbref prog,
                     const char *argstr, const char *cmdstr, int listen_p)
 {
-    std::tr1::shared_ptr<Interpeter> empty_interp;
+    std::tr1::shared_ptr<Interpreter> empty_interp;
 
    return add_event(TQ_MUF_TYP, (listen_p? TQ_LISTEN: TQ_QUEUE), 0,
                      player, loc, trig, prog, empty_interp, argstr, cmdstr, NULL);
@@ -295,7 +295,7 @@ add_prog_delayq_event(int delay, dbref player, dbref loc, dbref trig,
                     dbref prog, const char *argstr, const char *cmdstr,
                     int listen_p)
 {
-    std::tr1::shared_ptr<Interpeter> empty_interp;
+    std::tr1::shared_ptr<Interpreter> empty_interp;
 
     return add_event(TQ_MUF_TYP, (listen_p? TQ_LISTEN: TQ_QUEUE),
                      delay, player, loc, trig, prog, 
@@ -305,7 +305,7 @@ add_prog_delayq_event(int delay, dbref player, dbref loc, dbref trig,
 
 
 int
-add_prog_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpeter> interp, dbref trig)
+add_prog_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpreter> interp, dbref trig)
 {
     FLAGS(player) |= (INTERACTIVE | READMODE);
     return add_event(TQ_MUF_TYP, TQ_READ, -1, player, -1, /* fr->trig */ trig,
@@ -315,7 +315,7 @@ add_prog_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpeter> i
 
 int
 add_prog_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
-                    std::tr1::shared_ptr<Interpeter> interp, const char *mode)
+                    std::tr1::shared_ptr<Interpreter> interp, const char *mode)
 {
     return add_event(TQ_MUF_TYP, TQ_DELAY, delay, player, loc, trig,
                      prog, interp, mode, NULL, NULL);
@@ -324,7 +324,7 @@ add_prog_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
 void
 handle_read_event(dbref player, const char *command)
 {
-    std::tr1::shared_ptr<Interpeter> interp;
+    std::tr1::shared_ptr<Interpreter> interp;
     timequeue ptr, lastevent;
     // int flag;
     dbref prog;
@@ -483,7 +483,7 @@ next_timequeue_event()
                     strcpy(match_cmdname,
                             event->command? event->command : "");
 
-                    Interpeter::create_and_run_interp(
+                    Interpreter::create_and_run_interp(
                             event->uid, event->loc, event->called_prog, 
                             event->trig, BACKGROUND, STD_HARDUID, 
                             /* What event type is this? */ 0, NULL, NULL);
@@ -494,7 +494,7 @@ next_timequeue_event()
                 }
             }
         }
-        // Should we really be saving the interpeter here?
+        // Should we really be saving the interpreter here?
         // event->fr = NULL;
         // event->interp = NULL;
         // Trust the shared_ptr, it's your friend.
@@ -883,7 +883,7 @@ propqueue(dbref player, dbref where, dbref trigger, dbref what, dbref xclude,
                     strcpy(match_cmdname, "Queued event.");
                     //fprintf(stderr, "propqueue(#%d, %s)\n", the_prog, toparg ? toparg : "-N/A-");
                     
-                    Interpeter::create_and_run_interp(
+                    Interpreter::create_and_run_interp(
                             player, where, the_prog, 
                             trigger, BACKGROUND, STD_HARDUID, 
                             /* What event type is this? */ 0, NULL, NULL);

@@ -125,7 +125,7 @@ create_and_run_interp_frame(dbref player, dbref location, dbref program,
 	struct inst *mv;
 	struct frame *fr;
 
-	/* Create Interpeter */
+	/* Create Interpreter */
 	fr = create_interp_frame(player, location, program, source, nosleeps,
 		whichperms);
 
@@ -287,7 +287,7 @@ prog_clean(struct frame * fr)
 	fr->brkpt.proglines = NULL;
 	}
 
-	fr->interpeter.reset();
+	fr->interpreter.reset();
 
 	fr->next = free_frames_list;
 	free_frames_list = fr;
@@ -465,7 +465,7 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 		fr->pc = pc;
 		reload(fr, atop, stop);
 		DBSTORE(player, sp.player.block, (!fr->been_background));
-		add_prog_delay_event(0, player, NOTHING, NOTHING, program, fr->interpeter.lock(),
+		add_prog_delay_event(0, player, NOTHING, NOTHING, program, fr->interpreter.lock(),
 			(fr->multitask==FOREGROUND) ? "FOREGROUND" : "BACKGROUND");
 		interp_depth--;
 		calc_profile_timing(program,fr);
@@ -518,7 +518,7 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 			} else {
 				char *m;
 				char buf[BUFFER_LEN];
-				add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+				add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 				reload(fr, atop, stop);
 				fr->pc = pc;
 				fr->brkpt.isread = 0;
@@ -749,7 +749,7 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 			fr->pc = pc + 1;
 			DBSTORE(player, sp.player.curr_prog, program);
 			DBSTORE(player, sp.player.block, 0);
-			add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+			add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 			interp_depth--;
 			calc_profile_timing(program,fr);
 			return NULL;
@@ -766,7 +766,7 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 			if (temp1->data.number < 0)
 				abort_loop("Timetravel beyond scope of muf.", temp1, NULL);
 			add_prog_delay_event(temp1->data.number, player,
-				NOTHING, NOTHING, program, fr->interpeter.lock(), "SLEEPING");
+				NOTHING, NOTHING, program, fr->interpreter.lock(), "SLEEPING");
 			DBSTORE(player, sp.player.block, (!fr->been_background));
 			interp_depth--;
 			calc_profile_timing(program,fr);

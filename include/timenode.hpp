@@ -2,7 +2,7 @@
 #ifndef _timenode_h_included_
 #define _timenode_h_included_
 
-#include "interpeter.h"
+#include "interpreter.h"
 
 /* 
  Not used yet. Future!
@@ -51,10 +51,10 @@ add_prog_delayq_event(int delay, dbref player, dbref loc, dbref trig,
                     int listen_p);
 
 int
-add_prog_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpeter> interp, dbref trig);
+add_prog_read_event(dbref player, dbref prog, std::tr1::shared_ptr<Interpreter> interp, dbref trig);
 
 int
 add_prog_delay_event(int delay, dbref player, dbref loc, dbref trig, dbref prog,
-                    std::tr1::shared_ptr<Interpeter> interp, const char *mode);
+                    std::tr1::shared_ptr<Interpreter> interp, const char *mode);
 
 #endif // !_timenode_h_included_

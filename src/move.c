@@ -458,7 +458,7 @@ trigger(dbref player, dbref exit, int pflag)
 		}
 		break;
 	    case TYPE_PROGRAM:
-            Interpeter::create_and_run_interp(
+            Interpreter::create_and_run_interp(
                 player, DBFETCH(player)->location, dest, 
                 exit, FOREGROUND, STD_REGUID, 
                 MLUA_EVENT_CMD, NULL, NULL);

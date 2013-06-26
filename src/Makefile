@@ -96,7 +96,7 @@ CSRC= ${PROTSRC} \
 	balloc.c \
 	match.c \
 	mfuns.c mfuns2.c \
-	interpeter.cpp
+	interpreter.cpp
 
 LSRC= copyright.c
 MSRC= olddecomp.c reconst.c interface.c
@@ -106,7 +106,7 @@ SRC= ${MISCSRC} ${CSRC} ${LSRC} ${MSRC}
 
 COBJ= balloc.o boolexp.o compile.o compress.o create.o db.o \
 	debugger.o disassem.o diskprop.o edit.o events.o game.o hashtab.o \
-	help.o inst.o interp.o interpeter.o log.o look.o match.o mfuns.o mfuns2.o \
+	help.o inst.o interp.o interpreter.o log.o look.o match.o mfuns.o mfuns2.o \
 	mlua.o mlua_mdb.o msgparse.o move.o crt_malloc.o oldcompress.o player.o predicates.o \
 	p_connects.o p_db.o p_math.o p_misc.o p_props.o p_stack.o p_strings.o \
 	property.o propdirs.o props.o rob.o rwho.o sanity.o signal.o set.o \

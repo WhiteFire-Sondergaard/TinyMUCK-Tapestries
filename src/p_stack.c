@@ -590,8 +590,8 @@ prim_interp(PRIM_PROTOTYPE)
     strcpy(match_args, oper3->data.string? oper3->data.string->data : "");
    //  rv = create_and_run_interp_frame(player, DBFETCH(player)->location, oper1->data.objref,
             // oper2->data.objref, PREEMPT, STD_HARDUID, 1);
-    std::tr1::shared_ptr<InterpeterReturnValue> rv =
-        Interpeter::create_and_run_interp(player, DBFETCH(player)->location, oper1->data.objref,
+    std::tr1::shared_ptr<InterpreterReturnValue> rv =
+        Interpreter::create_and_run_interp(player, DBFETCH(player)->location, oper1->data.objref,
             oper2->data.objref, PREEMPT, STD_HARDUID, 1, NULL, NULL);
     strcpy(match_args, buf);
 
@@ -603,21 +603,21 @@ prim_interp(PRIM_PROTOTYPE)
 
     if (rv) {
         switch (rv->Type()) {
-            case InterpeterReturnValue::STRING:
+            case InterpreterReturnValue::STRING:
                 PushString(rv->String());
                 break;
 
-            case InterpeterReturnValue::DBREF:
+            case InterpreterReturnValue::DBREF:
                 val = rv->Dbref();
                 PushObject(val);
                 break;
 
-            case InterpeterReturnValue::INTEGER:
+            case InterpreterReturnValue::INTEGER:
                 val = rv->Number();
                 PushInt(val);
                 break;
 
-            case InterpeterReturnValue::BOOL:
+            case InterpreterReturnValue::BOOL:
                 val = rv->Bool();
                 PushInt(val);
                 break;

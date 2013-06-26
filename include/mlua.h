@@ -7,7 +7,7 @@
 #define _MLUA_H
 
 #include "lua.hpp" /* Some stuff requires this */
-#include "interpeter.h"
+#include "interpreter.h"
 #include <tr1/memory>
 
 /* TODO:
@@ -62,7 +62,7 @@
 #define mlua_is_foreground(i)	((i)->mode == MLUA_FOREGROUND)
 #define mlua_pid(i)		((i)->pid)
 
-struct mlua_interp	/* Mlua interpeter environment, */
+struct mlua_interp	/* Mlua interpreter environment, */
 {
     lua_State *L; 	/* The LUA state. 
 			   DO NOT use this within Lua C functions. */
@@ -91,7 +91,7 @@ struct mlua_interp	/* Mlua interpeter environment, */
     char *command;	/* malloced string with command */
     char *prop;		/* malloced string with prop run */
 
-    std::tr1::weak_ptr<Interpeter> interpeter;
+    std::tr1::weak_ptr<Interpreter> interpreter;
 };
 
 /* 
@@ -110,7 +110,7 @@ struct mlua_interp *mlua_create_interp(
 /* This function resumes a suspended Lua program by being passed it's
  * interp structure.
  */
-std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *interp, const char *resume_arg);
+std::tr1::shared_ptr<InterpreterReturnValue> mlua_resume(struct mlua_interp *interp, const char *resume_arg);
 
 /* Compile a program and store the data into the in-memory DB.
  * Optionally notify player of errors or success.
@@ -127,7 +127,7 @@ void mlua_decompile(dbref program);
 int mlua_open_mdb(lua_State *L);
 
 /*
- * Clean up an unused interpeter
+ * Clean up an unused interpreter
  */
 void mlua_free_interp(struct mlua_interp *interp);
 

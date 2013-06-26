@@ -187,8 +187,8 @@ eval_boolexp_rec(dbref player, struct boolexp * b, dbref thing)
             // rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
             //     b->thing, thing, PREEMPT, STD_HARDUID, 0);
             // return (rv != NULL);
-            std::tr1::shared_ptr<InterpeterReturnValue> rv =
-            Interpeter::create_and_run_interp(player, DBFETCH(player)->location,
+            std::tr1::shared_ptr<InterpreterReturnValue> rv =
+            Interpreter::create_and_run_interp(player, DBFETCH(player)->location,
                 b->thing, thing, PREEMPT, STD_HARDUID, 0, NULL, NULL);
             return rv->Bool();
 		    }

@@ -17,7 +17,7 @@
 #include "interp.h"
 
 #include "timenode.hpp"
-#include "interpeter.h"
+#include "interpreter.h"
 
 extern int force_level;
 
@@ -270,7 +270,7 @@ prim_fork(PRIM_PROTOTYPE)
 {
     int     i, j;
     struct frame *tmpfr;
-    std::tr1::shared_ptr<Interpeter> interp;
+    std::tr1::shared_ptr<Interpreter> interp;
 
     CHECKOP(0);
     CHECKOFLOW(1);
@@ -335,7 +335,7 @@ prim_fork(PRIM_PROTOTYPE)
     push(tmpfr->argument.st, &(tmpfr->argument.top),
 	 PROG_INTEGER, MIPSCAST & result);
 
-    interp = std::tr1::shared_ptr<Interpeter>(new MUFInterpeter(
+    interp = std::tr1::shared_ptr<Interpreter>(new MUFInterpreter(
         player, NOTHING, program,
         NOTHING, NULL, NULL, NULL /* should be something to indicate fork */,
         NULL, tmpfr));

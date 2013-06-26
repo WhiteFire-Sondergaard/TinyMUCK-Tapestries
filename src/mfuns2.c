@@ -1298,24 +1298,24 @@ mfn_muf(MFUNARGS)
     strcat(match_cmdname, "(MPI)");
     // rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
     //             obj, perms, PREEMPT, STD_HARDUID, 1);
-    std::tr1::shared_ptr<InterpeterReturnValue> rv =
-        Interpeter::create_and_run_interp(player, DBFETCH(player)->location,
+    std::tr1::shared_ptr<InterpreterReturnValue> rv =
+        Interpreter::create_and_run_interp(player, DBFETCH(player)->location,
                 obj, perms, PREEMPT, STD_HARDUID, 1, NULL, NULL);
 
     mpi_muf_call_levels--;
 
     if (!rv) return "";
     switch(rv->Type()) {
-        case InterpeterReturnValue::STRING:
+        case InterpreterReturnValue::STRING:
             strcpy(buf, rv->String());
             return buf;
 
-        case InterpeterReturnValue::INTEGER:
-        case InterpeterReturnValue::BOOL:
+        case InterpreterReturnValue::INTEGER:
+        case InterpreterReturnValue::BOOL:
             sprintf(buf, "%d", rv->Number());
             return buf;
 
-        case InterpeterReturnValue::DBREF:
+        case InterpreterReturnValue::DBREF:
             ptr = ref2str(rv->Dbref(), buf);
             return ptr;
 

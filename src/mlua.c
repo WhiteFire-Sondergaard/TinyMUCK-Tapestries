@@ -1,5 +1,5 @@
 /*
- * Functions to interface LUA in place of the MUF interpeter.
+ * Functions to interface LUA in place of the MUF interpreter.
  *
  * (c) Peter Torkelson 2005
  */
@@ -55,13 +55,13 @@ void mlua_dump_stack(lua_State *L, dbref player, const char *title)
 }
 
 /*
- * State to Interpeter
+ * State to Interpreter
  */
 mlua_interp *mlua_get_interp(lua_State *L)
 {
     struct mlua_interp *interp;
 
-    /* Extract the interpeter from the state */
+    /* Extract the interpreter from the state */
     lua_pushstring(L, "mlua_interp");
     lua_gettable(L, LUA_REGISTRYINDEX);
     interp = (mlua_interp *)lua_touserdata(L, -1);
@@ -393,7 +393,7 @@ static int load_program(lua_State *L, dbref program, dbref player)
     return TRUE;
 }
 
-/* Called to create a new interpeter and load code into it. */
+/* Called to create a new interpreter and load code into it. */
 /* Yea, that is a lot of arguments. :) */
 struct mlua_interp *mlua_create_interp(
     dbref program,
@@ -408,7 +408,7 @@ struct mlua_interp *mlua_create_interp(
 {
     lua_State *L;
     struct mlua_interp *interp = new struct mlua_interp;
-    interp->interpeter.reset(); // redundant, but just to be sure.
+    interp->interpreter.reset(); // redundant, but just to be sure.
 
     /* Do some error checking */
     if (!property && Typeof(program) != TYPE_PROGRAM) return NULL;
@@ -551,12 +551,12 @@ struct mlua_interp *mlua_create_interp(
 }
 
 /* Resum or start a lua program. */
-std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *interp, const char *resume_arg)
+std::tr1::shared_ptr<InterpreterReturnValue> mlua_resume(struct mlua_interp *interp, const char *resume_arg)
 {
     int error;
     int nargs = 0;
     //lua_State *L;
-    std::tr1::shared_ptr<InterpeterReturnValue> ret_val;
+    std::tr1::shared_ptr<InterpreterReturnValue> ret_val;
 
     if (!interp) return ret_val;
 
@@ -598,7 +598,7 @@ std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *inte
     {
         notify_nolisten(interp->player, "Lua Runtime Error:", 1);
         notify_nolisten(interp->player, lua_tostring(Lrunning, -1), 1);
-        //mlua_free_interp(interp); /* Interpeter now self-destructs */
+        //mlua_free_interp(interp); /* Interpreter now self-destructs */
         return ret_val;
     }
 
@@ -610,7 +610,7 @@ std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *inte
             DBSTORE(interp->player, sp.player.curr_prog, interp->program);
             DBSTORE(interp->player, sp.player.block, 0);
             add_prog_read_event(interp->player, interp->program, 
-                interp->interpeter.lock(), interp->trigger);
+                interp->interpreter.lock(), interp->trigger);
             break;
 
         case MLUA_YIELD:
@@ -619,7 +619,7 @@ std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *inte
             DBSTORE(interp->player, sp.player.block, 
                             (mlua_is_foreground(interp)));
             add_prog_delay_event(0, interp->player, NOTHING, NOTHING,
-                  interp->program, interp->interpeter.lock(),
+                  interp->program, interp->interpreter.lock(),
                   (mlua_is_foreground(interp)) ? "FOREGROUND" : "BACKGROUND");
             break;
 
@@ -628,7 +628,7 @@ std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *inte
             DBSTORE(interp->player, sp.player.block, 
                             (mlua_is_foreground(interp)));
             add_prog_delay_event(lua_tonumber(Lrunning, 1),
-                interp->player, NOTHING, NOTHING, interp->program, interp->interpeter.lock(),
+                interp->player, NOTHING, NOTHING, interp->program, interp->interpreter.lock(),
                 "SLEEPING");
             break;
 
@@ -646,22 +646,22 @@ std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *inte
     switch (lua_type(Lrunning, -1))
     {
         case LUA_TBOOLEAN:
-            ret_val = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::BOOL,
+            ret_val = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::BOOL,
                     lua_toboolean(Lrunning, -1)
                     ));
             break;
 
         case LUA_TNUMBER:
-            ret_val = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::INTEGER,
+            ret_val = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::INTEGER,
                     lua_tointeger(Lrunning, -1)
                     ));
             break;
 
         case LUA_TSTRING:
-            ret_val = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::STRING,
+            ret_val = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::STRING,
                     lua_tostring(Lrunning, -1)
                     ));
             break;
@@ -685,7 +685,7 @@ int mlua_run(
 {
     struct mlua_interp *interp;
 
-    /* Create the interpeter */
+    /* Create the interpreter */
     interp = mlua_create_interp(
         program,
         property,
@@ -724,7 +724,7 @@ void mlua_decompile(dbref program)
 }
 
 /*
- * Clean up an unused interpeter
+ * Clean up an unused interpreter
  */
 void mlua_free_interp(struct mlua_interp *interp)
 {
@@ -736,10 +736,10 @@ void mlua_free_interp(struct mlua_interp *interp)
     if (interp->command) free(interp->command);
     if (interp->prop) free(interp->prop);
 
-    /* Free up our pointer to the interpeter wrapper */
-    interp->interpeter.reset();
+    /* Free up our pointer to the interpreter wrapper */
+    interp->interpreter.reset();
 
-    /* The interpeter will garbage collect the structure itself */
+    /* The interpreter will garbage collect the structure itself */
     lua_close(interp->L);
 }
 

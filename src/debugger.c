@@ -410,7 +410,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
     } else if (!string_compare(cmd, "finish")) {
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Cannot finish because there are too many breakpoints set.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
             return 0;
         }
         j = fr->brkpt.count++;
@@ -428,7 +428,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         if (!i) i = 1;
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Cannot stepi because there are too many breakpoints set.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
             return 0;
         }
         j = fr->brkpt.count++;
@@ -446,7 +446,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         if (!i) i = 1;
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Cannot step because there are too many breakpoints set.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
             return 0;
         }
         j = fr->brkpt.count++;
@@ -464,7 +464,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         if (!i) i = 1;
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Cannot nexti because there are too many breakpoints set.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
             return 0;
         }
         j = fr->brkpt.count++;
@@ -482,7 +482,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         if (!i) i = 1;
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Cannot next because there are too many breakpoints set.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
             return 0;
         }
         j = fr->brkpt.count++;
@@ -498,17 +498,17 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
     } else if (!string_compare(cmd, "exec")) {
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Cannot finish because there are too many breakpoints set.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
             return 0;
         }
 	if (!(pinst = funcname_to_pc(program, arg))) {
 	    notify_nolisten(player, "I don't know a function by that name.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 	    return 0;
 	}
 	if (fr->system.top >= STACK_SIZE) {
 	    notify_nolisten(player, "That would exceed the system stack size for this program.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 	    return 0;
 	}
 	fr->system.st[fr->system.top].progref = program;
@@ -527,17 +527,17 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
     } else if (!string_compare(cmd, "prim")) {
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Cannot finish because there are too many breakpoints set.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
             return 0;
         }
 	if (!(i = primitive(arg))) {
 	    notify_nolisten(player, "I don't recognize that primitive.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 	    return 0;
 	}
 	if (fr->system.top >= STACK_SIZE) {
 	    notify_nolisten(player, "That would exceed the system stack size for this program.", 1);
-            add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+            add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 	    return 0;
 	}
 
@@ -568,7 +568,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         fr->brkpt.bypass = 1;
         return 0;
     } else if (!string_compare(cmd, "break")) {
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         if (fr->brkpt.count >= MAX_BREAKS) {
             notify_nolisten(player, "Too many breakpoints set.", 1);
             return 0;
@@ -595,7 +595,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         notify_nolisten(player, "Breakpoint set.", 1);
         return 0;
     } else if (!string_compare(cmd, "delete")) {
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         i = atoi(arg);
         if (!i) {
             notify_nolisten(player, "Which breakpoint did you want to delete?", 1);
@@ -625,12 +625,12 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
             notify_nolisten(player, ptr, 1);
         }
         notify_nolisten(player, "*done*", 1);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         return 0;
     } else if (!string_compare(cmd, "where")) {
         i = atoi(arg);
         muf_backtrace(player, program, i, fr);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         return 0;
     } else if (!string_compare(cmd, "stack")) {
         notify_nolisten(player, "*Argument stack top*", 1);
@@ -651,13 +651,13 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
                 notify_fmt(player, "%3d) %s", j+1, ptr);
         }
         notify_nolisten(player, "*done*", 1);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         return 0;
     } else if (!string_compare(cmd, "list") ||
 	       !string_compare(cmd, "listi")) {
         int startline, endline;
         startline = endline = 0;
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         if ((ptr2 = (char *)index(arg, ','))) {
             *ptr2++ = '\0';
         } else {
@@ -730,7 +730,7 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         notify_nolisten(player, "Halting execution.", 1);
         return 1;
     } else if (!string_compare(cmd, "trace")) {
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         if (!string_compare(arg, "on")) {
             fr->brkpt.showstack = 1;
             notify_nolisten(player, "Trace turned on.", 1);
@@ -745,18 +745,18 @@ muf_debugger(dbref player, dbref program, const char *text, struct frame *fr)
         return 0;
     } else if (!string_compare(cmd, "words")) {
 	list_program_functions(player, program, arg);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         return 0;
     } else if (!string_compare(cmd, "print")) {
 	debug_printvar(player, fr, arg);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         return 0;
     } else if (!string_compare(cmd, "push")) {
 	push_arg(player, fr, arg);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         return 0;
     } else if (!string_compare(cmd, "pop")) {
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 	if (fr->argument.top < 1) {
 	    notify_nolisten(player, "Nothing to pop.", 1);
 	    return 0;
@@ -793,11 +793,11 @@ notify_nolisten(player, "push DATA       pushes an int, dbref, var, or string on
 notify_nolisten(player, "pop             pops top data item off the stack.", 1);
 notify_nolisten(player, "help            displays this help screen.", 1);
 notify_nolisten(player, "quit            stop execution here.", 1);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
 	return 0;
     } else {
         notify_nolisten(player, "I don't understand that debugger command. Type 'help' for help.", 1);
-	add_prog_read_event(player, program, fr->interpeter.lock(), fr->trig);
+	add_prog_read_event(player, program, fr->interpreter.lock(), fr->trig);
         return 0;
     }
     return 0;

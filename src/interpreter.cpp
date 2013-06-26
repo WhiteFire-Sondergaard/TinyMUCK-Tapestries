@@ -1,5 +1,5 @@
 /*
-  Interpeter abstraction by WhiteFire Sondergaard for Tapestries MUCK.
+  Interpreter abstraction by WhiteFire Sondergaard for Tapestries MUCK.
 */
 
 #include "copyright.h"
@@ -14,17 +14,17 @@
 #include "props.h"
 #include "interface.h"
 #include "externs.h"
-#include "interpeter.h"
+#include "interpreter.h"
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
 
 /* --------------------------------------------------------------------------------------
-    Interpeter stuff
+    Interpreter stuff
 */
 /* Factory to create subclasses */
-std::tr1::shared_ptr<Interpeter> Interpeter::create_interp(dbref player, dbref location, dbref program,
+std::tr1::shared_ptr<Interpreter> Interpreter::create_interp(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property)
 {
 #ifdef COMPRESS
@@ -32,7 +32,7 @@ std::tr1::shared_ptr<Interpeter> Interpeter::create_interp(dbref player, dbref l
 #else
     const char *lang = get_property_class(program, "~language");
 #endif
-    std::tr1::shared_ptr<Interpeter> ret_interp;
+    std::tr1::shared_ptr<Interpreter> ret_interp;
 
     if (!MLevel(program) || !MLevel(OWNER(program)) ||
         ((source != NOTHING) && !TrueWizard(OWNER(source)) &&
@@ -44,12 +44,12 @@ std::tr1::shared_ptr<Interpeter> Interpeter::create_interp(dbref player, dbref l
 
     if (lang && (strcmp(lang, "Lua") == 0)) // Lua
     {
-        ret_interp = std::tr1::shared_ptr<Interpeter>(new LuaInterpeter(player, location, program, source, 
+        ret_interp = std::tr1::shared_ptr<Interpreter>(new LuaInterpreter(player, location, program, source, 
             nosleeps, whichperms, event, property));
     }
     else // MUF
     {
-        ret_interp = std::tr1::shared_ptr<Interpeter>(new MUFInterpeter(player, location, program, source, 
+        ret_interp = std::tr1::shared_ptr<Interpreter>(new MUFInterpreter(player, location, program, source, 
             nosleeps, whichperms, event, property));
     }
 
@@ -58,13 +58,13 @@ std::tr1::shared_ptr<Interpeter> Interpeter::create_interp(dbref player, dbref l
     return ret_interp;
 }
 
-std::tr1::shared_ptr<InterpeterReturnValue> Interpeter::create_and_run_interp(dbref player, dbref location, dbref program,
+std::tr1::shared_ptr<InterpreterReturnValue> Interpreter::create_and_run_interp(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property, const char *arg)
 {
-    std::tr1::shared_ptr<InterpeterReturnValue> irv;
+    std::tr1::shared_ptr<InterpreterReturnValue> irv;
 
-    std::tr1::shared_ptr<Interpeter> i = 
-        Interpeter::create_interp(player, location, program, source, nosleeps, whichperms, event, property);
+    std::tr1::shared_ptr<Interpreter> i = 
+        Interpreter::create_interp(player, location, program, source, nosleeps, whichperms, event, property);
 
     if (i)
         irv = i->resume(arg);
@@ -75,9 +75,9 @@ std::tr1::shared_ptr<InterpeterReturnValue> Interpeter::create_and_run_interp(db
 /* --------------------------------------------------------------------------------------
     Lua
 */
-LuaInterpeter::LuaInterpeter(dbref player, dbref location, dbref program,
+LuaInterpreter::LuaInterpreter(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property)
-    : Interpeter(event, player)
+    : Interpreter(event, player)
 {
     int mode;
     dbref euid = OWNER(program);
@@ -111,37 +111,37 @@ LuaInterpeter::LuaInterpeter(dbref player, dbref location, dbref program,
 }
 
 // Why? because this may not be done during the constructor.
-void LuaInterpeter::set_weak_pointer()
+void LuaInterpreter::set_weak_pointer()
 {
     if (this->fr)
-        this->fr->interpeter = shared_from_this();
+        this->fr->interpreter = shared_from_this();
 }
 
-LuaInterpeter::~LuaInterpeter()
+LuaInterpreter::~LuaInterpreter()
 {
     if (this->fr)
         mlua_free_interp(this->fr);
 }
 
-const char *LuaInterpeter::type()
+const char *LuaInterpreter::type()
 {
     return "Lua";
 }
 
-bool LuaInterpeter::background()
+bool LuaInterpreter::background()
 {
     return this->fr->mode == MLUA_BACKGROUND;
 }
 
-void LuaInterpeter::handle_read_event(const char *command)
+void LuaInterpreter::handle_read_event(const char *command)
 {
     this->resume(command);
     // Um. What do we do now? Are we done? How do we know?
 }
 
-std::tr1::shared_ptr<InterpeterReturnValue> LuaInterpeter::resume(const char *str)
+std::tr1::shared_ptr<InterpreterReturnValue> LuaInterpreter::resume(const char *str)
 {
-    std::tr1::shared_ptr<InterpeterReturnValue> irv;
+    std::tr1::shared_ptr<InterpreterReturnValue> irv;
 
     this->totaltime_start();
     irv = mlua_resume(this->fr, str);
@@ -150,24 +150,24 @@ std::tr1::shared_ptr<InterpeterReturnValue> LuaInterpeter::resume(const char *st
     return irv;
 }
 
-void LuaInterpeter::totaltime_start()
+void LuaInterpreter::totaltime_start()
 {
     gettimeofday(&this->proftime, NULL);
     if (!this->started)
         this->started = time(NULL);
 }
 
-time_t LuaInterpeter::get_started()
+time_t LuaInterpreter::get_started()
 {
     return this->started;
 }
 
-long LuaInterpeter::get_instruction_count()
+long LuaInterpreter::get_instruction_count()
 {
     return 0L;
 }
 
-void LuaInterpeter::totaltime_stop()
+void LuaInterpreter::totaltime_stop()
 {
     struct timeval tv;
 
@@ -187,7 +187,7 @@ void LuaInterpeter::totaltime_stop()
     }
 }
 
-struct timeval *LuaInterpeter::get_totaltime()
+struct timeval *LuaInterpreter::get_totaltime()
 {
     return &this->totaltime;
 }
@@ -195,58 +195,58 @@ struct timeval *LuaInterpeter::get_totaltime()
 /* --------------------------------------------------------------------------------------
     MUF
 */
-MUFInterpeter::MUFInterpeter(dbref player, dbref location, dbref program,
+MUFInterpreter::MUFInterpreter(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property)
-    : Interpeter(event, player)
+    : Interpreter(event, player)
 {
     this->fr = create_interp_frame(player, location, program, source, nosleeps, whichperms);
     this->program = program;
-//    this->fr->interpeter = shared_from_this();
+//    this->fr->interpreter = shared_from_this();
 }
 
-MUFInterpeter::MUFInterpeter(dbref player, dbref location, dbref program,
+MUFInterpreter::MUFInterpreter(dbref player, dbref location, dbref program,
        dbref source, int nosleeps, int whichperms, int event, const char *property, 
        struct frame *new_frame)
-    : Interpeter(event, player)
+    : Interpreter(event, player)
 {
     this->program = program;
     this->fr = new_frame;
 }
 
 // Why? because this may not be done during the constructor.
-void MUFInterpeter::set_weak_pointer()
+void MUFInterpreter::set_weak_pointer()
 {
-    this->fr->interpeter = shared_from_this();
+    this->fr->interpreter = shared_from_this();
 }
 
-const char *MUFInterpeter::type()
+const char *MUFInterpreter::type()
 {
     return "MUF";
 }
 
-struct timeval *MUFInterpeter::get_totaltime()
+struct timeval *MUFInterpreter::get_totaltime()
 {
     return &this->fr->totaltime;
 }
 
-bool MUFInterpeter::background()
+bool MUFInterpreter::background()
 {
     return this->fr->multitask == BACKGROUND;
 }
 
-time_t MUFInterpeter::get_started()
+time_t MUFInterpreter::get_started()
 {
     return (time_t)this->fr->started;
 }
 
-long MUFInterpeter::get_instruction_count()
+long MUFInterpreter::get_instruction_count()
 {
     return this->fr->instcnt;
 }
 
 /* Checks the MUF timequeue for address references on the stack or */
 /* dbref references on the callstack */
-bool MUFInterpeter::has_refs(dbref program)
+bool MUFInterpreter::has_refs(dbref program)
 {
     int loop;
     if (!(this->fr) ||
@@ -268,7 +268,7 @@ bool MUFInterpeter::has_refs(dbref program)
     return 0;
 }
 
-bool MUFInterpeter::get_number_of_references(dbref program)
+bool MUFInterpreter::get_number_of_references(dbref program)
 {
     int refs = 0, loop;
 
@@ -288,17 +288,17 @@ bool MUFInterpeter::get_number_of_references(dbref program)
     return refs;
 }
 
-MUFInterpeter::~MUFInterpeter()
+MUFInterpreter::~MUFInterpreter()
 {
     // Release people from blocking mode...
     if (this->fr->multitask != BACKGROUND)
         DBFETCH(this->uid)->sp.player.block = 0;
 
-    // Delete interpeter
+    // Delete interpreter
     prog_clean(this->fr);
 }
 
-void MUFInterpeter::handle_read_event(const char *command)
+void MUFInterpreter::handle_read_event(const char *command)
 {
     if (this->fr->brkpt.debugging && !this->fr->brkpt.isread) {
 
@@ -328,10 +328,10 @@ void MUFInterpeter::handle_read_event(const char *command)
 void RCLEAR(struct inst * oper, char *file, int line);
 #define CLEAR(oper) RCLEAR(oper, __FILE__, __LINE__)
 
-std::tr1::shared_ptr<InterpeterReturnValue> MUFInterpeter::resume(const char *str)
+std::tr1::shared_ptr<InterpreterReturnValue> MUFInterpreter::resume(const char *str)
 {
     struct inst *rv;
-    std::tr1::shared_ptr<InterpeterReturnValue> irv;
+    std::tr1::shared_ptr<InterpreterReturnValue> irv;
 
     if (str)
     {
@@ -343,8 +343,8 @@ std::tr1::shared_ptr<InterpeterReturnValue> MUFInterpeter::resume(const char *st
              */
             notify_nolisten(this->uid, "Program stack overflow.", 1);
             //prog_clean(this->fr);
-            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::NIL,
+            irv = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::NIL,
                     0
                     ));
             return irv;
@@ -362,16 +362,16 @@ std::tr1::shared_ptr<InterpeterReturnValue> MUFInterpeter::resume(const char *st
 
     if (rv == NULL)
     {
-        return std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::BOOL,
+        return std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::BOOL,
                     FALSE
                     ));
     }
 
     if ((int)rv == 1)
     {
-        return std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::BOOL,
+        return std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::BOOL,
                     TRUE
                     ));
     }
@@ -379,40 +379,40 @@ std::tr1::shared_ptr<InterpeterReturnValue> MUFInterpeter::resume(const char *st
     switch(rv->type) {
         case PROG_STRING:
             if (rv->data.string) {
-                irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::STRING,
+                irv = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::STRING,
                     rv->data.string->data
                     ));
             } else {
-                irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::STRING,
+                irv = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::STRING,
                     ""
                     ));
             }
             break;
 
         case PROG_INTEGER:
-            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::INTEGER,
+            irv = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::INTEGER,
                     rv->data.number
                     ));
             break;
 
         case PROG_OBJECT:
-            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::DBREF,
+            irv = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::DBREF,
                     rv->data.objref
                     ));
 
             // Note: MUF primitive returns a string, that needs to be handled
             // in the muf primitive, not here. Though, it would be nice if 
-            // InterpeterReturnValue had a function to do this.
+            // InterpreterReturnValue had a function to do this.
             //ptr = ref2str(rv->data.objref, buf);
             break;
 
         default:
-            irv = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
-                    InterpeterReturnValue::NIL,
+            irv = std::tr1::shared_ptr<InterpreterReturnValue>(new InterpreterReturnValue(
+                    InterpreterReturnValue::NIL,
                     0
                     ));
             break;
@@ -422,53 +422,53 @@ std::tr1::shared_ptr<InterpeterReturnValue> MUFInterpeter::resume(const char *st
 }
 
 /* --------------------------------------------------------------------------------------
-    InterpeterReturnValue stuff
+    InterpreterReturnValue stuff
 */
-InterpeterReturnValue::InterpeterReturnValue(const int type, const int num)
+InterpreterReturnValue::InterpreterReturnValue(const int type, const int num)
 {
     return_type = type;
     v_num = num;
     v_str = NULL;
 }
 
-InterpeterReturnValue::InterpeterReturnValue(const int type, const char *str)
+InterpreterReturnValue::InterpreterReturnValue(const int type, const char *str)
 {
     return_type = type;
     v_num = 0;
     v_str = alloc_string(str);
 }
 
-InterpeterReturnValue::~InterpeterReturnValue()
+InterpreterReturnValue::~InterpreterReturnValue()
 {
     if (v_str) free(v_str);
 }
 
-const char *InterpeterReturnValue::String()
+const char *InterpreterReturnValue::String()
 {
     return v_str;
 }
 
-const int InterpeterReturnValue::Type()
+const int InterpreterReturnValue::Type()
 {
     return return_type;
 }
 
-const int InterpeterReturnValue::Bool()
+const int InterpreterReturnValue::Bool()
 {
-    if (return_type == InterpeterReturnValue::STRING)
+    if (return_type == InterpreterReturnValue::STRING)
         return v_str[0] != 0;
-    else if (return_type == InterpeterReturnValue::NIL)
+    else if (return_type == InterpreterReturnValue::NIL)
         return FALSE;
     else
         return v_num != 0;
 }
 
-const int InterpeterReturnValue::Dbref()
+const int InterpreterReturnValue::Dbref()
 {
     return v_num;
 }
 
-const int InterpeterReturnValue::Number()
+const int InterpreterReturnValue::Number()
 {
     return v_num;
 }

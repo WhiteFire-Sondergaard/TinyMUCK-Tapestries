@@ -200,7 +200,7 @@ exec_or_notify(dbref player, dbref thing,
 	    strcpy(match_cmdname, whatcalled);
         /* (void) create_and_run_interp_frame(player, DBFETCH(player)->location, i, thing,
               PREEMPT, STD_HARDUID, 0); */
-        (void) Interpeter::create_and_run_interp(player, DBFETCH(player)->location, i, thing,
+        (void) Interpreter::create_and_run_interp(player, DBFETCH(player)->location, i, thing,
               PREEMPT, STD_HARDUID, 0, NULL, NULL);
 	    strcpy(match_args, tmparg);
 	    strcpy(match_cmdname, tmpcmd);
