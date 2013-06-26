@@ -483,12 +483,10 @@ next_timequeue_event()
                     strcpy(match_cmdname,
                             event->command? event->command : "");
 
-                    std::tr1::shared_ptr<Interpeter> i = 
-                        Interpeter::create_interp(
+                    Interpeter::create_and_run_interp(
                             event->uid, event->loc, event->called_prog, 
                             event->trig, BACKGROUND, STD_HARDUID, 
-                            /* What event type is this? */ 0, NULL);
-                    i->resume(NULL);
+                            /* What event type is this? */ 0, NULL, NULL);
 
                     //create_and_run_interp_frame(event->uid, event->loc, 
                     //       event->called_prog,
@@ -884,12 +882,11 @@ propqueue(dbref player, dbref where, dbref trigger, dbref what, dbref xclude,
                     strcpy(match_args, toparg? toparg : "");
                     strcpy(match_cmdname, "Queued event.");
                     //fprintf(stderr, "propqueue(#%d, %s)\n", the_prog, toparg ? toparg : "-N/A-");
-                    std::tr1::shared_ptr<Interpeter> i = 
-                        Interpeter::create_interp(
+                    
+                    Interpeter::create_and_run_interp(
                             player, where, the_prog, 
                             trigger, BACKGROUND, STD_HARDUID, 
-                            /* What event type is this? */ 0, NULL);
-                    i->resume(NULL);
+                            /* What event type is this? */ 0, NULL, NULL);
 
                     //create_and_run_interp_frame(player, where, the_prog, trigger,
                     //       BACKGROUND, STD_HARDUID, 0);

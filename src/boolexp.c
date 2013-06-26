@@ -183,10 +183,14 @@ eval_boolexp_rec(dbref player, struct boolexp * b, dbref thing)
 		if (Typeof(b->thing) == TYPE_PROGRAM) {
 		    if (Typeof(player) == TYPE_PLAYER ||
 			    Typeof(player) == TYPE_THING) {
-			struct inst *rv;
-			rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
-				b->thing, thing, PREEMPT, STD_HARDUID, 0);
-			return (rv != NULL);
+            // struct inst *rv;
+            // rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
+            //     b->thing, thing, PREEMPT, STD_HARDUID, 0);
+            // return (rv != NULL);
+            std::tr1::shared_ptr<InterpeterReturnValue> rv =
+            Interpeter::create_and_run_interp(player, DBFETCH(player)->location,
+                b->thing, thing, PREEMPT, STD_HARDUID, 0, NULL, NULL);
+            return rv->Bool();
 		    }
 		}
 		return (b->thing == player || b->thing == OWNER(player)

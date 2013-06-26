@@ -70,6 +70,14 @@ public:
       dbref source, int nosleeps, int whichperms, 
       int event, const char *property);
 
+	/* 
+	Factory for creating execution environments 
+	*/
+	static std::tr1::shared_ptr<InterpeterReturnValue> create_and_run_interp(
+		  dbref player, dbref location, dbref program,
+      dbref source, int nosleeps, int whichperms, 
+      int event, const char *property, const char *args);
+
 protected:
 	int pid; // process id
 	dbref uid; // Player owning process
@@ -174,11 +182,11 @@ private:
 class InterpeterReturnValue
 {
 public:
-	static const unsigned int NIL = 0;
-	static const unsigned int STRING = 1;
-	static const unsigned int INTEGER = 2;
-	static const unsigned int BOOL = 3;
-	static const unsigned int DBREF = 4;
+	static const int NIL = 0;
+	static const int STRING = 1;
+	static const int INTEGER = 2;
+	static const int BOOL = 3;
+	static const int DBREF = 4;
 
 	InterpeterReturnValue(const int type, const int num);
 	InterpeterReturnValue(const int type, const char *str);

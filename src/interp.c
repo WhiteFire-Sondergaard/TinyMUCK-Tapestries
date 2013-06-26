@@ -38,6 +38,7 @@
    execution.
    */
 
+struct line *read_program(dbref i);
 
 void 
 p_null(PRIM_PROTOTYPE)
@@ -429,7 +430,7 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 	struct line *tmpline;
 
 	tmpline = DBFETCH(program)->sp.program.first;
-	DBFETCH(program)->sp.program.first = (struct line *) read_program(program);
+	DBFETCH(program)->sp.program.first = read_program(program);
 	do_compile(OWNER(program), program);
 	free_prog_text(DBFETCH(program)->sp.program.first);
 	DBSTORE(program, sp.program.first, tmpline);
@@ -665,8 +666,7 @@ interp_loop(dbref player, dbref program, struct frame * fr, int rettyp)
 				struct line *tmpline;
 
 				tmpline = DBFETCH(temp1->data.objref)->sp.program.first;
-				DBFETCH(temp1->data.objref)->sp.program.first =
-				(struct line *) read_program(temp1->data.objref);
+				DBFETCH(temp1->data.objref)->sp.program.first = read_program(temp1->data.objref);
 				do_compile(OWNER(temp1->data.objref), temp1->data.objref);
 				free_prog_text(DBFETCH(temp1->data.objref)->sp.program.first);
 				DBSTORE(temp1->data.objref, sp.program.first, tmpline);

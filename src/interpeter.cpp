@@ -58,7 +58,19 @@ std::tr1::shared_ptr<Interpeter> Interpeter::create_interp(dbref player, dbref l
     return ret_interp;
 }
 
+std::tr1::shared_ptr<InterpeterReturnValue> Interpeter::create_and_run_interp(dbref player, dbref location, dbref program,
+       dbref source, int nosleeps, int whichperms, int event, const char *property, const char *arg)
+{
+    std::tr1::shared_ptr<InterpeterReturnValue> irv;
 
+    std::tr1::shared_ptr<Interpeter> i = 
+        Interpeter::create_interp(player, location, program, source, nosleeps, whichperms, event, property);
+
+    if (i)
+        irv = i->resume(arg);
+
+    return irv;
+}
 
 /* --------------------------------------------------------------------------------------
     Lua
@@ -132,11 +144,8 @@ std::tr1::shared_ptr<InterpeterReturnValue> LuaInterpeter::resume(const char *st
     std::tr1::shared_ptr<InterpeterReturnValue> irv;
 
     this->totaltime_start();
-    mlua_resume(this->fr, str);
+    irv = mlua_resume(this->fr, str);
     this->totaltime_stop();
-
-    // Do something with irv
-
 
     return irv;
 }
@@ -446,7 +455,12 @@ const int InterpeterReturnValue::Type()
 
 const int InterpeterReturnValue::Bool()
 {
-    return v_num != 0;
+    if (return_type == InterpeterReturnValue::STRING)
+        return v_str[0] != 0;
+    else if (return_type == InterpeterReturnValue::NIL)
+        return FALSE;
+    else
+        return v_num != 0;
 }
 
 const int InterpeterReturnValue::Dbref()

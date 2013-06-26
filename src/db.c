@@ -1375,7 +1375,7 @@ autostart_progs()
                 /* They queue up when they finish compiling. */
                 o = DBFETCH(i);
                 tmp = o->sp.program.first;
-                o->sp.program.first = (struct line *) read_program(i);
+                o->sp.program.first =  read_program(i);
                 do_compile(OWNER(i), i);
                 free_prog_text(o->sp.program.first);
                 o->sp.program.first = tmp;

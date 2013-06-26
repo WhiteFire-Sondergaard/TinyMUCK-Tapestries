@@ -19,6 +19,8 @@
 
 #include "timenode.hpp"
 
+struct line *read_program(dbref i);
+
 void
 list_proglines(dbref player, dbref program, struct frame *fr, int start, int end)
 {
@@ -37,7 +39,7 @@ list_proglines(dbref player, dbref program, struct frame *fr, int start, int end
     }
     if (!fr->brkpt.proglines || program != fr->brkpt.lastproglisted) {
 	free_prog_text(fr->brkpt.proglines);
-	fr->brkpt.proglines = (struct line *)read_program(program);
+	fr->brkpt.proglines = read_program(program);
 	fr->brkpt.lastproglisted = program;
     }
     tmpline = DBFETCH(program)->sp.program.first;

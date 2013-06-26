@@ -732,7 +732,7 @@ list_publics(dbref player, int arg[], int argc)
             struct line *tmpline;
 
             tmpline = DBFETCH(program)->sp.program.first;
-            DBFETCH(program)->sp.program.first = (struct line *) read_program(program);
+            DBFETCH(program)->sp.program.first = read_program(program);
             do_compile(OWNER(program), program);
             free_prog_text(DBFETCH(program)->sp.program.first);
             DBSTORE(program, sp.program.first, tmpline);

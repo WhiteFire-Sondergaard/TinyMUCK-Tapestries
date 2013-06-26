@@ -1277,7 +1277,7 @@ const char *
 mfn_muf(MFUNARGS)
 {
     char *ptr;
-    struct inst *rv;
+    //truct inst *rv;
     dbref obj = mesg_dbref_raw(player, what, perms, argv[0]);
 
     if (obj == UNKNOWN)
@@ -1296,37 +1296,31 @@ mfn_muf(MFUNARGS)
     ptr = get_mvar("how");
     strcpy(match_cmdname, ptr);
     strcat(match_cmdname, "(MPI)");
-    rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
-                obj, perms, PREEMPT, STD_HARDUID, 1);
+    // rv = create_and_run_interp_frame(player, DBFETCH(player)->location,
+    //             obj, perms, PREEMPT, STD_HARDUID, 1);
+    std::tr1::shared_ptr<InterpeterReturnValue> rv =
+        Interpeter::create_and_run_interp(player, DBFETCH(player)->location,
+                obj, perms, PREEMPT, STD_HARDUID, 1, NULL, NULL);
 
     mpi_muf_call_levels--;
 
     if (!rv) return "";
-    switch(rv->type) {
-        case PROG_STRING:
-            if (rv->data.string) {
-                strcpy(buf, rv->data.string->data);
-                CLEAR(rv);
-                return buf;
-            } else {
-                CLEAR(rv);
-                return "";
-            }
-            break;
-        case PROG_INTEGER:
-            sprintf(buf, "%d", rv->data.number);
-            CLEAR(rv);
+    switch(rv->Type()) {
+        case InterpeterReturnValue::STRING:
+            strcpy(buf, rv->String());
             return buf;
-            break;
-        case PROG_OBJECT:
-            ptr = ref2str(rv->data.objref, buf);
-            CLEAR(rv);
+
+        case InterpeterReturnValue::INTEGER:
+        case InterpeterReturnValue::BOOL:
+            sprintf(buf, "%d", rv->Number());
+            return buf;
+
+        case InterpeterReturnValue::DBREF:
+            ptr = ref2str(rv->Dbref(), buf);
             return ptr;
-            break;
+
         default:
-            CLEAR(rv);
             return "";
-            break;
     }
 }
 

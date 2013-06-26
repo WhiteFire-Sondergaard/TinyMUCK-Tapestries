@@ -319,12 +319,16 @@ prim_fork(PRIM_PROTOTYPE)
     tmpfr->brkpt.isread = 0;
     tmpfr->brkpt.bypass = 0;
     tmpfr->brkpt.lastcmd = NULL;
+    tmpfr->brkpt.proglines = NULL;
 
     tmpfr->pid = top_pid++;
     tmpfr->multitask = BACKGROUND;
     tmpfr->writeonly = 1;
     tmpfr->started = time(NULL);
     tmpfr->instcnt = 0;
+    tmpfr->perms = fr->perms;
+
+    memcpy(&(tmpfr->totaltime), &(fr->totaltime), sizeof(fr->totaltime));
 
     /* child process gets a 0 returned on the stack */
     result = 0;

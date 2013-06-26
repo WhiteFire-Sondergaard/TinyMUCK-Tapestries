@@ -198,8 +198,10 @@ exec_or_notify(dbref player, dbref thing,
 	    p = do_parse_mesg(player,thing,p,whatcalled,buf,MPI_ISPRIVATE);
 	    strcpy(match_args, p);
 	    strcpy(match_cmdname, whatcalled);
-	    (void) create_and_run_interp_frame(player, DBFETCH(player)->location, i, thing,
-			  PREEMPT, STD_HARDUID, 0);
+        /* (void) create_and_run_interp_frame(player, DBFETCH(player)->location, i, thing,
+              PREEMPT, STD_HARDUID, 0); */
+        (void) Interpeter::create_and_run_interp(player, DBFETCH(player)->location, i, thing,
+              PREEMPT, STD_HARDUID, 0, NULL, NULL);
 	    strcpy(match_args, tmparg);
 	    strcpy(match_cmdname, tmpcmd);
 	}

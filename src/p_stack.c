@@ -568,7 +568,7 @@ prim_setmode(PRIM_PROTOTYPE)
 void
 prim_interp(PRIM_PROTOTYPE)
 {
-    struct inst *oper1, *oper2, *oper3, *rv;
+    struct inst *oper1, *oper2, *oper3;
     char buf[BUFFER_LEN];
 
     CHECKOP(3);
@@ -588,23 +588,45 @@ prim_interp(PRIM_PROTOTYPE)
 
     strcpy(buf, match_args);
     strcpy(match_args, oper3->data.string? oper3->data.string->data : "");
-    rv = create_and_run_interp_frame(player, DBFETCH(player)->location, oper1->data.objref,
-			oper2->data.objref, PREEMPT, STD_HARDUID, 1);
+   //  rv = create_and_run_interp_frame(player, DBFETCH(player)->location, oper1->data.objref,
+            // oper2->data.objref, PREEMPT, STD_HARDUID, 1);
+    std::tr1::shared_ptr<InterpeterReturnValue> rv =
+        Interpeter::create_and_run_interp(player, DBFETCH(player)->location, oper1->data.objref,
+            oper2->data.objref, PREEMPT, STD_HARDUID, 1, NULL, NULL);
     strcpy(match_args, buf);
 
     CLEAR(oper3);
     CLEAR(oper2);
     CLEAR(oper1);
 
+    int val;
+
     if (rv) {
-	if (rv->type < PROG_STRING) {
-	    push(arg, top, rv->type, MIPSCAST (&rv->data.number));
-	} else {
-	    push(arg, top, rv->type, MIPSCAST (rv->data.string));
-	}
+        switch (rv->Type()) {
+            case InterpeterReturnValue::STRING:
+                PushString(rv->String());
+                break;
+
+            case InterpeterReturnValue::DBREF:
+                val = rv->Dbref();
+                PushObject(val);
+                break;
+
+            case InterpeterReturnValue::INTEGER:
+                val = rv->Number();
+                PushInt(val);
+                break;
+
+            case InterpeterReturnValue::BOOL:
+                val = rv->Bool();
+                PushInt(val);
+                break;
+
+            default:
+                PushNullStr;
+        }
     } else {
         PushNullStr;
     }
-
 }
 

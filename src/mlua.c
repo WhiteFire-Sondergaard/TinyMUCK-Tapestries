@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "mlua.h"
 #include "timenode.hpp"
@@ -25,6 +26,17 @@
  * PID stuff. Should be a functioncall to somewhere. This is kinda lame.
  */
 extern int top_pid;
+
+/*
+ * Because it's not in db.h? :P
+ */
+struct line *read_program(dbref i);
+
+
+/*
+ * Forward declerations
+ */
+static int load_program(lua_State *L, dbref program, dbref player);
 
 /*
  * Lua stack dump
@@ -63,12 +75,115 @@ mlua_interp *mlua_get_interp(lua_State *L)
  * to their own file at some point, probably mlua_api.c. Right now
  * the few that exist are hacked into here for testing.
  */
+
+ /* Almost copied verbatum from the lua base library, but
+    load_aux was merged, and the mode is forced to "t".
+    */
+
+#define RESERVEDSLOT 5
+/*
+** Reader for generic `load' function: `lua_load' uses the
+** stack for internal stuff, so the reader cannot change the
+** stack top. Instead, it keeps its resulting string in a
+** reserved slot inside the stack.
+*/
+static const char *generic_reader (lua_State *L, void *ud, size_t *size) {
+  (void)(ud);  /* not used */
+  luaL_checkstack(L, 2, "too many nested functions");
+  lua_pushvalue(L, 1);  /* get function */
+  lua_call(L, 0, 1);  /* call it */
+  if (lua_isnil(L, -1)) {
+    *size = 0;
+    return NULL;
+  }
+  else if (!lua_isstring(L, -1))
+    luaL_error(L, "reader function must return a string");
+  lua_replace(L, RESERVEDSLOT);  /* save string in reserved slot */
+  return lua_tolstring(L, RESERVEDSLOT, size);
+}
+
+static int mlua_lib_package_searcher(lua_State *L)
+{
+    int n = lua_gettop(L);
+    size_t name_length;
+    const char *name = lua_tolstring(L, 1, &name_length);
+    dbref player;
+    dbref prog;
+    const char *lang;
+    struct mlua_interp *interp;
+
+    if (n != 1)
+        return luaL_error(L, "mlua_lib_package_searcher(): takes 1 argument");
+
+    /* get the player dbref from registry */
+    lua_pushstring(L, "mlua_interp");
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    interp = (mlua_interp *)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    if (!interp)
+    {
+      return luaL_error(L, "mlua_lib_package_searcher(): mlua_interp missing from registry.");
+    }
+    player = interp->player;
+
+    prog = find_registered_obj(player, name);
+
+    if (prog == NOTHING || Typeof(prog) != TYPE_PROGRAM)
+        return 0;
+
+ #ifdef COMPRESS
+    lang = uncompress(get_property_class(prog, "~language"));
+#else
+    lang = get_property_class(prog, "~language");
+#endif
+
+    if (!lang || (strcmp(lang, "Lua") != 0))
+        return luaL_error(L, "mlua_lib_package_searcher(): program is not Lua");
+
+    if (load_program(L, prog, player))
+        return 1;
+    else
+        return luaL_error(L, "mlua_lib_package_searcher(): module unloadable");
+}
+
+static int mlua_lib_load(lua_State *L)
+{
+    int status;
+    size_t l;
+    int top = lua_gettop(L);
+    const char *s = lua_tolstring(L, 1, &l);
+    const char *mode = "t";
+    if (s != NULL) {  /* loading a string? */
+        const char *chunkname = luaL_optstring(L, 2, s);
+        status = luaL_loadbufferx(L, s, l, chunkname, mode);
+    }
+    else {  /* loading from a reader function */
+        const char *chunkname = luaL_optstring(L, 2, "=(load)");
+        luaL_checktype(L, 1, LUA_TFUNCTION);
+        lua_settop(L, RESERVEDSLOT);  /* create reserved slot */
+        status = lua_load(L, generic_reader, NULL, chunkname, mode);
+    }
+    if (status == LUA_OK && top >= 4) {  /* is there an 'env' argument */
+        lua_pushvalue(L, 4);  /* environment for loaded function */
+        lua_setupvalue(L, -2, 1);  /* set it as 1st upvalue */
+    }
+
+    if (status == LUA_OK)
+        return 1;
+    else {
+        lua_pushnil(L);
+        lua_insert(L, -2);  /* put before error message */
+        return 2;  /* return nil plus error message */
+    }
+}
+
 static int mlua_lib_print (lua_State *L) {
   int n = lua_gettop(L);  /* number of arguments */
   int i, sl, bl;
   dbref player;
   char output[BUFFER_LEN+1];
   struct mlua_interp *interp;
+  int tostring;
 
   output[0] = 0;
   bl = 0;
@@ -80,29 +195,56 @@ static int mlua_lib_print (lua_State *L) {
   lua_pop(L, 1);
   if (!interp)
   {
-      lua_pushstring(L, "lua_lib_print(): mlua_interp missing from registry.");
-      lua_error(L);
+      // lua_pushstring(L, "lua_lib_print(): mlua_interp missing from registry.");
+      // lua_error(L);
+      return luaL_error(L, "lua_lib_print(): mlua_interp missing from registry.");
   }
   player = interp->player;
+  assert(player >= 0 && player <= db_top && Typeof(player) == TYPE_PLAYER);
 
   lua_getglobal(L, "tostring");
+  tostring = lua_gettop(L);
+
   for (i=1; i<=n; i++) {
     const char *s;
-    lua_pushvalue(L, -1);  /* function to be called */
-    lua_pushvalue(L, i);   /* value to print */
-    lua_call(L, 1, 1);
-    s = lua_tostring(L, -1);  /* get result */
-    if (s == NULL)
-      return luaL_error(L, "`tostring' must return a string to `print'");
-    if (i>1 && (bl + 1 < BUFFER_LEN)) {
-        strcat(output, " ");
-        bl++;
+    bool need_pop = false;
+
+    if (lua_isstring(L, i))
+    {
+        s = lua_tostring(L, i);
+        if (s == NULL)
+            return luaL_error(L, "lua_lib_print(): lua_tostring() returned NULL");
     }
-    sl = strlen(s);
-    if (bl + sl < BUFFER_LEN) {
-        strcat(output, s);
-    }    
-    lua_pop(L, 1);  /* pop result */
+    else
+    {
+        //mlua_dump_stack(L, player, "Before tostring.");
+        lua_checkstack(L, 5);
+        lua_pushvalue(L, /* -1 */ tostring);  /* function to be called */
+        lua_pushvalue(L, i);   /* value to print */
+        //mlua_dump_stack(L, player, "Before call.");
+        lua_call(L, 1, 1);
+        //mlua_dump_stack(L, player, "After call.");
+        s = lua_tostring(L, -1);  /* get result */
+        if (s == NULL)
+          return luaL_error(L, "lua_lib_print(): `tostring' must return a string to `print'");
+        need_pop = true;
+    } 
+
+    if (*s)
+    {
+       if (i>1 && (bl + 1 < BUFFER_LEN)) {
+            strcat(output, " ");
+            bl++;
+        }
+        sl = strlen(s);
+        if (bl + sl < BUFFER_LEN) {
+            strcat(output, s);
+            bl += sl;
+        }
+        else
+            return luaL_error(L, "lua_lib_print(): buffer overflow.");
+    }
+    if (need_pop) lua_pop(L, 1);  /* pop result */
   }
 
   notify_nolisten(player, output, 1);
@@ -198,6 +340,12 @@ static void mlua_base_open(lua_State *l)
     lua_setglobal(l, "yield");
     lua_pushcfunction(l, mlua_lib_sleep);
     lua_setglobal(l, "sleep");
+    lua_pushcfunction(l, mlua_lib_load);
+    lua_setglobal(l, "load");
+    lua_pushcfunction(l, mlua_lib_load);
+    lua_setglobal(l, "loadstring");
+
+    // Need a mlua_lib_load here...
 }
 
 static int load_program(lua_State *L, dbref program, dbref player)
@@ -296,13 +444,56 @@ struct mlua_interp *mlua_create_interp(
 
     /* need to overwrite some dangerous functions provide by base... */
     lua_pushnil(L); lua_setglobal(L, "loadfile");
+    lua_pushnil(L); lua_setglobal(L, "loadstring");
+    lua_pushnil(L); lua_setglobal(L, "load");
     lua_pushnil(L); lua_setglobal(L, "dofile");
     lua_pushnil(L); lua_setglobal(L, "require");
     lua_pushnil(L); lua_setglobal(L, "print");
     lua_pushnil(L); lua_setglobal(L, "coroutine");
+    lua_pushnil(L); lua_setglobal(L, "collectgarbage");
     luaopen_table(L); lua_remove(L, -1);
     luaopen_string(L); lua_remove(L, -1);
     luaopen_math(L); lua_remove(L, -1);
+
+    //mlua_dump_stack(L, player, "Post lua math lib...");
+
+    // Has to be loaded differently...
+    luaL_requiref(L, "package", luaopen_package, 1);
+    lua_pushnil(L); lua_setfield(L, -2, "loaders");
+    lua_pushnil(L); lua_setfield(L, -2, "path");
+    lua_pushnil(L); lua_setfield(L, -2, "cpath");
+    lua_pushnil(L); lua_setfield(L, -2, "loaders");
+    lua_pushnil(L); lua_setfield(L, -2, "searchpath");
+    lua_createtable(L, 1, 0);
+    lua_pushvalue(L, -2);
+    lua_pushcclosure(L, mlua_lib_package_searcher, 1);
+    lua_rawseti(L, -2, 1);
+    lua_setfield(L, -2, "searchers");  /* put it in field 'searchers' */
+    lua_pop(L, 1);
+    lua_pushnil(L); lua_setglobal(L, "module"); // So broken. QQ
+
+    //mlua_dump_stack(L, player, "Post lua package lib...");
+
+    luaL_requiref(L, "os", luaopen_os, 1);
+    lua_pushnil(L); lua_setfield(L, -2, "execute");
+    lua_pushnil(L); lua_setfield(L, -2, "getenv");
+    lua_pushnil(L); lua_setfield(L, -2, "exit");
+    lua_pushnil(L); lua_setfield(L, -2, "remove");
+    lua_pushnil(L); lua_setfield(L, -2, "rename");
+    lua_pushnil(L); lua_setfield(L, -2, "setlocale");
+    lua_pushnil(L); lua_setfield(L, -2, "tmpname");
+    lua_pop(L, 1);
+
+    luaL_requiref(L, "math", luaopen_math, 1);
+    lua_pushnil(L); lua_setfield(L, -2, "randomseed"); // Not safe
+    lua_pop(L, 1);
+
+    luaL_requiref(L, "string", luaopen_string, 1);
+    lua_pushnil(L); lua_setfield(L, -2, "dump"); // Not safe
+    lua_pop(L, 1);
+
+    luaL_requiref(L, "table", luaopen_table, 1);
+    lua_pop(L, 1);
 
     //mlua_dump_stack(L, player, "Post lua libs...");
 
@@ -450,6 +641,33 @@ std::tr1::shared_ptr<InterpeterReturnValue> mlua_resume(struct mlua_interp *inte
             break;
     }
 
+    // LUA_TNIL, LUA_TNUMBER, LUA_TBOOLEAN, LUA_TSTRING, LUA_TTABLE, 
+    // LUA_TFUNCTION, LUA_TUSERDATA, LUA_TTHREAD, and LUA_TLIGHTUSERDATA.
+    switch (lua_type(Lrunning, -1))
+    {
+        case LUA_TBOOLEAN:
+            ret_val = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::BOOL,
+                    lua_toboolean(Lrunning, -1)
+                    ));
+            break;
+
+        case LUA_TNUMBER:
+            ret_val = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::INTEGER,
+                    lua_tointeger(Lrunning, -1)
+                    ));
+            break;
+
+        case LUA_TSTRING:
+            ret_val = std::tr1::shared_ptr<InterpeterReturnValue>(new InterpeterReturnValue(
+                    InterpeterReturnValue::STRING,
+                    lua_tostring(Lrunning, -1)
+                    ));
+            break;
+    }
+
+
     return ret_val;
 }
 
@@ -566,8 +784,7 @@ int mlua_compile(dbref player, dbref program, int silent)
     /* load the muf file if it's not already loaded... */
     if (!DBFETCH(program)->sp.program.first)
     {
-        DBFETCH(program)->sp.program.first =
-                (struct line *) read_program(program);
+        DBFETCH(program)->sp.program.first = read_program(program);
         program_text_loaded = TRUE;
     }
 
