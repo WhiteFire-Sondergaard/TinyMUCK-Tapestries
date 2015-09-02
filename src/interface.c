@@ -2913,13 +2913,13 @@ dump_mssp(struct descriptor_data * d)
 	char   *ptr;
 
 	// for stats
-	int     rooms;
-	int     exits;
-	int     things;
-	int     players;
-	int     programs;
+	int     rooms = 0;
+	int     exits = 0;
+	int     things = 0;
+	int     players = 0;
+	int     programs = 0;
 	int     garbage = 0;
-	int     total;
+	int     total = 0;
 	time_t 	uptime = (time_t)get_property_value(0,"_sys/startuptime");
 
 	// Get stats
