@@ -518,9 +518,10 @@ process_command(dbref player, char *command)
     char   *arg2;
     char   *full_command;
     char   *p;			/* utility */
-    char    pbuf[BUFFER_LEN];
+    char    pbuf[BUFFER_LEN + 100];
     char    xbuf[BUFFER_LEN];
     char    ybuf[BUFFER_LEN];
+    char   *expand_to;
 
     if (command == 0)
 	abort();
@@ -556,12 +557,140 @@ process_command(dbref player, char *command)
 	command++;
 
     /* check for single-character commands */
-    if (*command == SAY_TOKEN) {
-	sprintf(pbuf, "say %s", command + 1);
-	command = &pbuf[0];
-    } else if (*command == POSE_TOKEN) {
-	sprintf(pbuf, "pose %s", command + 1);
-	command = &pbuf[0];
+ //    if (*command == SAY_TOKEN) {
+	// sprintf(pbuf, "say %s", command + 1);
+	// command = &pbuf[0];
+ //    } else if (*command == POSE_TOKEN) {
+	// sprintf(pbuf, "pose %s", command + 1);
+	// command = &pbuf[0];
+ //    }
+
+    expand_to = NULL;
+    switch(command[0])
+    {
+    	// Classics. Leave as is.
+    	case '"':
+            expand_to = "say";
+            break;
+
+    	case ':':
+            expand_to = "pose";
+            break;
+
+        // New format, convert to @punctuation-name
+    	case '\'':
+            expand_to = "@apostrophe";
+            break;
+
+    	case ';':
+            expand_to = "@semicolon";
+            break;
+
+    	case '/':
+            expand_to = "@slash";
+            break;
+
+    	case '\\':
+            expand_to = "@backslash";
+            break;
+
+    	case '.':
+            expand_to = "@period";
+            break;
+
+    	case ',':
+            expand_to = "@comma";
+            break;
+
+    	case '(':
+            expand_to = "@open-parentheses";
+            break;
+
+    	case ')':
+            expand_to = "@close-parentheses";
+            break;
+
+    	case '[':
+            expand_to = "@open-braket";
+            break;
+
+    	case ']':
+            expand_to = "@close-bracket";
+            break;
+
+    	case '<':
+            expand_to = "@open-angle-braket";
+            break;
+
+    	case '>':
+            expand_to = "@close-angle-bracket";
+            break;
+
+    	case '{':
+            expand_to = "@open-curly-braket";
+            break;
+
+    	case '}':
+            expand_to = "@close-curly-bracket";
+            break;
+
+    	case '=':
+            expand_to = "@equals";
+            break;
+
+    	case '-':
+            expand_to = "@dash";
+            break;
+
+    	case '_':
+            expand_to = "@underscore";
+            break;
+
+    	case '+':
+            expand_to = "@plus";
+            break;
+
+    	case '#':
+            expand_to = "@hash";
+            break;
+
+    	case '$':
+            expand_to = "@dollar";
+            break;
+
+    	case '%':
+            expand_to = "@percent";
+            break;
+
+    	case '^':
+            expand_to = "@caret";
+            break;
+
+    	case '&':
+            expand_to = "@ampersand";
+            break;
+
+    	case '*':
+            expand_to = "@asterisk";
+            break;
+
+    	case '~':
+            expand_to = "@tilde";
+            break;
+
+    	case '|':
+            expand_to = "@pipe";
+            break;
+
+    }
+
+    if (expand_to != NULL)
+    {
+    	if (!can_move(player, command, 0))
+    	{
+    	    sprintf(pbuf, "%s %s", expand_to, command + 1);
+    	    command = &pbuf[0];
+    	}
     }
 
     /* if player is a wizard, and uses overide token to start line...*/
@@ -584,7 +713,7 @@ process_command(dbref player, char *command)
 	for (arg1 = command; *arg1 && !isspace(*arg1); arg1++);
 	/* truncate command */
 	if (*arg1)
-	    *arg1++ = '\0';
+	    *arg1++ = '\0' ;
 
 	/* remember command for programs */
 	strcpy(match_cmdname, command);
@@ -598,11 +727,11 @@ process_command(dbref player, char *command)
 
 	/* truncate arg1 */
 	for (p = arg2 - 1; p >= arg1 && isspace(*p); p--)
-	    *p = '\0';
+	    *p = '\0' ;
 
 	/* go past delimiter if present */
 	if (*arg2)
-	    *arg2++ = '\0';
+	    *arg2++ = '\0' ;
 	while (*arg2 && isspace(*arg2))
 	    arg2++;
 
@@ -1167,11 +1296,11 @@ process_command(dbref player, char *command)
 		    do_info(player, arg1, arg2);
 		}
 		break;
-	    case 'k':
-	    case 'K':
-		Matched("kill");
-		do_kill(player, arg1, atoi(arg2));
-		break;
+	 //    case 'k':
+	 //    case 'K':
+		// Matched("kill");
+		// do_kill(player, arg1, atoi(arg2));
+		// break;
 	    case 'l':
 	    case 'L':
 		if (string_prefix("look", command)) {
@@ -1236,11 +1365,11 @@ process_command(dbref player, char *command)
 			Matched("read");	/* undocumented alias for look */
 			do_look_at(player, arg1, arg2);
 			break;
-		    case 'o':
-		    case 'O':
-			Matched("rob");
-			do_rob(player, arg1);
-			break;
+		 //    case 'o':
+		 //    case 'O':
+			// Matched("rob");
+			// do_rob(player, arg1);
+			// break;
 		    default:
 			goto bad;
 		}

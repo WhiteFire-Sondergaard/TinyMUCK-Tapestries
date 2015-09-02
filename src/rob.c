@@ -52,150 +52,151 @@
 #include "match.h"
 #include "externs.h"
 
-void 
-do_rob(dbref player, const char *what)
-{
-    dbref   thing;
-    char    buf[BUFFER_LEN];
-    struct match_data md;
 
-    init_match(player, what, TYPE_PLAYER, &md);
-    match_neighbor(&md);
-    match_me(&md);
-    if (Wizard(OWNER(player))) {
-	match_absolute(&md);
-	match_player(&md);
-    }
-    thing = match_result(&md);
+// void 
+// do_rob(dbref player, const char *what)
+// {
+//     dbref   thing;
+//     char    buf[BUFFER_LEN];
+//     struct match_data md;
 
-    switch (thing) {
-	case NOTHING:
-	    notify(player, "Rob whom?");
-	    break;
-	case AMBIGUOUS:
-	    notify(player, "I don't know who you mean!");
-	    break;
-	default:
-	    if (Typeof(thing) != TYPE_PLAYER) {
-		notify(player, "Sorry, you can only rob other players.");
-	    } else if (DBFETCH(thing)->sp.player.pennies < 1) {
-		sprintf(buf, "%s has no %s.", NAME(thing), tp_pennies);
-		notify(player, buf);
-		sprintf(buf,
-		     "%s tried to rob you, but you have no %s to take.",
-			NAME(player), tp_pennies);
-		notify(thing, buf);
-	    } else if (can_doit(player, thing,
-				"Your conscience tells you not to.")) {
-		/* steal a penny */
-		DBFETCH(player)->sp.player.pennies++;
-		DBDIRTY(player);
-		DBFETCH(thing)->sp.player.pennies--;
-		DBDIRTY(thing);
-		notify_fmt(player, "You stole a %s.", tp_penny);
-		sprintf(buf, "%s stole one of your %s!", NAME(player), tp_pennies);
-		notify(thing, buf);
-	    }
-	    break;
-    }
-}
+//     init_match(player, what, TYPE_PLAYER, &md);
+//     match_neighbor(&md);
+//     match_me(&md);
+//     if (Wizard(OWNER(player))) {
+// 	match_absolute(&md);
+// 	match_player(&md);
+//     }
+//     thing = match_result(&md);
 
-void 
-do_kill(dbref player, const char *what, int cost)
-{
-    dbref   victim;
-    char    buf[BUFFER_LEN];
-    struct match_data md;
+//     switch (thing) {
+// 	case NOTHING:
+// 	    notify(player, "Rob whom?");
+// 	    break;
+// 	case AMBIGUOUS:
+// 	    notify(player, "I don't know who you mean!");
+// 	    break;
+// 	default:
+// 	    if (Typeof(thing) != TYPE_PLAYER) {
+// 		notify(player, "Sorry, you can only rob other players.");
+// 	    } else if (DBFETCH(thing)->sp.player.pennies < 1) {
+// 		sprintf(buf, "%s has no %s.", NAME(thing), tp_pennies);
+// 		notify(player, buf);
+// 		sprintf(buf,
+// 		     "%s tried to rob you, but you have no %s to take.",
+// 			NAME(player), tp_pennies);
+// 		notify(thing, buf);
+// 	    } else if (can_doit(player, thing,
+// 				"Your conscience tells you not to.")) {
+// 		/* steal a penny */
+// 		DBFETCH(player)->sp.player.pennies++;
+// 		DBDIRTY(player);
+// 		DBFETCH(thing)->sp.player.pennies--;
+// 		DBDIRTY(thing);
+// 		notify_fmt(player, "You stole a %s.", tp_penny);
+// 		sprintf(buf, "%s stole one of your %s!", NAME(player), tp_pennies);
+// 		notify(thing, buf);
+// 	    }
+// 	    break;
+//     }
+// }
 
-    init_match(player, what, TYPE_PLAYER, &md);
-    match_neighbor(&md);
-    match_me(&md);
-    if (Wizard(OWNER(player))) {
-	match_player(&md);
-	match_absolute(&md);
-    }
-    victim = match_result(&md);
+// void 
+// do_kill(dbref player, const char *what, int cost)
+// {
+//     dbref   victim;
+//     char    buf[BUFFER_LEN];
+//     struct match_data md;
 
-    switch (victim) {
-	case NOTHING:
-	    notify(player, "I don't see that player here.");
-	    break;
-	case AMBIGUOUS:
-	    notify(player, "I don't know who you mean!");
-	    break;
-	default:
-	    if (Typeof(victim) != TYPE_PLAYER) {
-		notify(player, "Sorry, you can only kill other players.");
-	    } else {
-		/* go for it */
-		/* set cost */
-		if (cost < tp_kill_min_cost)
-		    cost = tp_kill_min_cost;
+//     init_match(player, what, TYPE_PLAYER, &md);
+//     match_neighbor(&md);
+//     match_me(&md);
+//     if (Wizard(OWNER(player))) {
+// 	match_player(&md);
+// 	match_absolute(&md);
+//     }
+//     victim = match_result(&md);
 
-		if (FLAGS(DBFETCH(player)->location) & HAVEN) {
-		    notify(player, "You can't kill anyone here!");
-		    break;
-		}
+//     switch (victim) {
+// 	case NOTHING:
+// 	    notify(player, "I don't see that player here.");
+// 	    break;
+// 	case AMBIGUOUS:
+// 	    notify(player, "I don't know who you mean!");
+// 	    break;
+// 	default:
+// 	    if (Typeof(victim) != TYPE_PLAYER) {
+// 		notify(player, "Sorry, you can only kill other players.");
+// 	    } else {
+// 		/* go for it */
+// 		/* set cost */
+// 		if (cost < tp_kill_min_cost)
+// 		    cost = tp_kill_min_cost;
 
-		if (tp_restrict_kill) {
-		    if (!(FLAGS(player) & KILL_OK)) {
-			notify(player, "You have to be set Kill_OK to kill someone.");
-			break;
-		    }
-		    if (!(FLAGS(victim) & KILL_OK)) {
-			notify(player, "They don't want to be killed.");
-			break;
-		    }
-		}
+// 		if (FLAGS(DBFETCH(player)->location) & HAVEN) {
+// 		    notify(player, "You can't kill anyone here!");
+// 		    break;
+// 		}
 
-		/* see if it works */
-		if (!payfor(player, cost)) {
-		    notify_fmt(player, "You don't have enough %s.", tp_pennies);
-		} else if ((RANDOM() % tp_kill_base_cost) < cost
-			   && !Wizard(OWNER(victim))) {
-		    /* you killed him */
-		    if (GETDROP(victim))
-			/* give him the drop message */
-			notify(player, GETDROP(victim));
-		    else {
-			sprintf(buf, "You killed %s!", NAME(victim));
-			notify(player, buf);
-		    }
+// 		if (tp_restrict_kill) {
+// 		    if (!(FLAGS(player) & KILL_OK)) {
+// 			notify(player, "You have to be set Kill_OK to kill someone.");
+// 			break;
+// 		    }
+// 		    if (!(FLAGS(victim) & KILL_OK)) {
+// 			notify(player, "They don't want to be killed.");
+// 			break;
+// 		    }
+// 		}
 
-		    /* now notify everybody else */
-		    if (GETODROP(victim)) {
-			sprintf(buf, "%s killed %s! ", PNAME(player),
-				PNAME(victim));
-			parse_omessage(player, getloc(player), victim,
-					GETODROP(victim), buf, "(@Odrop)");
-		    } else {
-			sprintf(buf, "%s killed %s!", NAME(player), NAME(victim));
-		    }
-		    notify_except(DBFETCH(DBFETCH(player)->location)->contents, player, buf, player);
+// 		/* see if it works */
+// 		if (!payfor(player, cost)) {
+// 		    notify_fmt(player, "You don't have enough %s.", tp_pennies);
+// 		} else if ((RANDOM() % tp_kill_base_cost) < cost
+// 			   && !Wizard(OWNER(victim))) {
+// 		    /* you killed him */
+// 		    if (GETDROP(victim))
+// 			/* give him the drop message */
+// 			notify(player, GETDROP(victim));
+// 		    else {
+// 			sprintf(buf, "You killed %s!", NAME(victim));
+// 			notify(player, buf);
+// 		    }
 
-		    /* maybe pay off the bonus */
-		    if (DBFETCH(victim)->sp.player.pennies < tp_max_pennies) {
-			sprintf(buf, "Your insurance policy pays %d %s.",
-				tp_kill_bonus, tp_pennies);
-			notify(victim, buf);
-			DBFETCH(victim)->sp.player.pennies += tp_kill_bonus;
-			DBDIRTY(victim);
-		    } else {
-			notify(victim, "Your insurance policy has been revoked.");
-		    }
-		    /* send him home */
-		    send_home(victim, 1);
+// 		    /* now notify everybody else */
+// 		    if (GETODROP(victim)) {
+// 			sprintf(buf, "%s killed %s! ", PNAME(player),
+// 				PNAME(victim));
+// 			parse_omessage(player, getloc(player), victim,
+// 					GETODROP(victim), buf, "(@Odrop)");
+// 		    } else {
+// 			sprintf(buf, "%s killed %s!", NAME(player), NAME(victim));
+// 		    }
+// 		    notify_except(DBFETCH(DBFETCH(player)->location)->contents, player, buf, player);
 
-		} else {
-		    /* notify player and victim only */
-		    notify(player, "Your murder attempt failed.");
-		    sprintf(buf, "%s tried to kill you!", NAME(player));
-		    notify(victim, buf);
-		}
-		break;
-	    }
-    }
-}
+// 		    /* maybe pay off the bonus */
+// 		    if (DBFETCH(victim)->sp.player.pennies < tp_max_pennies) {
+// 			sprintf(buf, "Your insurance policy pays %d %s.",
+// 				tp_kill_bonus, tp_pennies);
+// 			notify(victim, buf);
+// 			DBFETCH(victim)->sp.player.pennies += tp_kill_bonus;
+// 			DBDIRTY(victim);
+// 		    } else {
+// 			notify(victim, "Your insurance policy has been revoked.");
+// 		    }
+// 		    /* send him home */
+// 		    send_home(victim, 1);
+
+// 		} else {
+// 		    /* notify player and victim only */
+// 		    notify(player, "Your murder attempt failed.");
+// 		    sprintf(buf, "%s tried to kill you!", NAME(player));
+// 		    notify(victim, buf);
+// 		}
+// 		break;
+// 	    }
+//     }
+// }
 
 void 
 do_give(dbref player, const char *recipient, int amount)
