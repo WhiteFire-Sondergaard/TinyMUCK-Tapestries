@@ -521,6 +521,7 @@ mfn_with(MFUNARGS)
 
     ptr = MesgParse(argv[0], argv[0]);
     CHECKRETURN(ptr,"WITH","arg 1");
+    *vbuf = 0; // Uninitialized tmp FTL
     v = new_mvar(ptr, vbuf);
     if (v == 1)
         ABORT_MPI("WITH","Variable name too long.");
@@ -556,6 +557,7 @@ mfn_fold(MFUNARGS)
 
     ptr = MesgParse(argv[0],argv[0]);
     CHECKRETURN(ptr,"FOLD","arg 1");
+    *tmp = 0; // Uninitialized tmp FTL
     v = new_mvar(ptr, tmp);
     if (v == 1)
         ABORT_MPI("FOLD","Variable name too long.");
@@ -564,6 +566,7 @@ mfn_fold(MFUNARGS)
 
     ptr = MesgParse(argv[1],argv[1]);
     CHECKRETURN(ptr,"FOLD","arg 2");
+    *tmp2 = 0; // Uninitialized tmp FTL
     v = new_mvar(ptr, tmp2);
     if (v == 1)
         ABORT_MPI("FOLD","Variable name too long.");
@@ -618,6 +621,7 @@ mfn_for(MFUNARGS)
 
     ptr = MesgParse(argv[0],argv[0]);
     CHECKRETURN(ptr,"FOR","arg 1 (varname)");
+    *tmp = 0; // Uninitialized tmp FTL
     v = new_mvar(ptr, tmp);
     if (v == 1)
         ABORT_MPI("FOR","Variable name too long.");
@@ -660,6 +664,7 @@ mfn_foreach(MFUNARGS)
 
     ptr = MesgParse(argv[0],argv[0]);
     CHECKRETURN(ptr,"FOREACH","arg 1");
+    *tmp = 0; // Uninitialized tmp FTL
     v = new_mvar(ptr, tmp);
     if (v == 1)
         ABORT_MPI("FOREACH","Variable name too long.");
@@ -711,7 +716,8 @@ mfn_filter(MFUNARGS)
 
     ptr = MesgParse(argv[0],argv[0]);
     CHECKRETURN(ptr,"FILTER","arg 1");
-    v = new_mvar(ptr, tmp);
+    *tmp = 0; // Uninitialized tmp FTL
+    v = new_mvar(ptr, tmp); 
     if (v == 1)
         ABORT_MPI("FILTER","Variable name too long.");
     if (v == 2)
@@ -915,6 +921,7 @@ mfn_lsort(MFUNARGS)
     CHECKRETURN(ptr,"LSORT","arg 1");
     if (argc > 1) {
         ptr2 = MesgParse(argv[1], argv[1]);
+	*vbuf = 0; // Uninitialized tmp FTL
         CHECKRETURN(ptr2,"LSORT","arg 2");
         j = new_mvar(ptr2, vbuf);
         if (j == 1)
@@ -923,6 +930,7 @@ mfn_lsort(MFUNARGS)
             ABORT_MPI("LSORT","Too many variables already defined.");
         ptr2 = MesgParse(argv[2],argv[2]);
         CHECKRETURN(ptr2,"LSORT","arg 3");
+	*vbuf2 = 0; // Uninitialized tmp FTL
         j = new_mvar(ptr2, vbuf2);
         if (j == 1)
             ABORT_MPI("LSORT","Variable name too long.");
@@ -1022,6 +1030,7 @@ mfn_parse(MFUNARGS)
 
     ptr = MesgParse(argv[0], argv[0]);
     CHECKRETURN(ptr,"PARSE","arg 1");
+    *tmp = 0; // Uninitialized tmp FTL
     v = new_mvar(ptr, tmp);
     if (v == 1)
         ABORT_MPI("PARSE","Variable name too long.");
@@ -1520,6 +1529,7 @@ mfn_commas(MFUNARGS)
     if (argc > 2) {
         ptr = MesgParse(argv[2], buf2);
         CHECKRETURN(ptr,"COMMAS","arg 3");
+    	*tmp = 0; // Uninitialized tmp FTL
         v = new_mvar(ptr, tmp);
         if (v == 1)
             ABORT_MPI("COMMAS","Variable name too long.");
