@@ -686,7 +686,7 @@ process_command(dbref player, char *command)
 
     if (expand_to != NULL)
     {
-    	if (!can_move(player, expand_to, 0))
+    	if (can_move(player, expand_to, 0))
     	{
     	    sprintf(pbuf, "%s %s", expand_to, command + 1);
     	    command = &pbuf[0];

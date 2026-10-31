@@ -710,7 +710,7 @@ int
 new_mfunc(const char *funcname, const char *buf)
 {
     if (strlen(funcname) > MAX_MFUN_NAME_LEN) return 1;
-    if (funcc > MPI_MAX_FUNCTIONS) return 2;
+    if (funcc >= MPI_MAX_FUNCTIONS) return 2;
     strcpy(funcv[funcc].name, funcname);
     funcv[funcc++].buf = (char *)string_dup(buf);
     return 0;
