@@ -461,6 +461,11 @@ main(int argc, char **argv)
        if(ssl_init) {
                SSL_library_init();
                ctx = SSL_CTX_new(SSLv23_method());
+
+               // The tapestries cert is signed with SHA1.  Current openssl
+               // will no logner load it by default.  Set lower security level.
+               SSL_CTX_set_security_level(ctx, 0);
+
                if(!SSL_CTX_use_certificate_chain_file(ctx, SSL_KEY_FILE)) {
                        fprintf(stderr, "Couldn't load %s!\n", SSL_KEY_FILE);
                        exit(2);

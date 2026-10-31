@@ -305,7 +305,8 @@ main (int argc, char**argv)
     queue_add_node("er ", 99999999);
 
     while (!feof(stdin)) {
-        gets(buf);
+        // gets(buf);
+        fgets(buf, sizeof(buf), stdin);
         p = strchr(buf, ':');
         if (p) {
 	    p = strchr(p + 1, ':');

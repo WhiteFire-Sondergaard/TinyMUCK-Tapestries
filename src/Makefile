@@ -43,7 +43,8 @@ DEST=${ROOT}/bin
 # #######################################################################
 CC=gcc
 DEFS=-DHAVE_CONFIG_H
-LIBR= -lm -lnsl -lssl -lxcrypt
+#LIBR= -lm -lnsl -lssl -lxcrypt
+LIBR= -lm -lnsl -lssl -lcrypt -lcrypto
 
 # #######################################################################
 #  	   Usualy don't need to change anything past here.
@@ -52,7 +53,15 @@ LIBR= -lm -lnsl -lssl -lxcrypt
 #
 # Include path, Cflags...
 #
-CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE}
+#CFLAGS= -m32 -Wall ${OPTIM} ${DEFS} -I${INCLUDE}
+# -Wno-implicit-function-declaration - strncasecmp should be included from <strings.h>
+#     but the muck has ../include/strings.h as well.  Recent gcc makes the
+#     implicit declaration an error.  It'll require a bit of work to untangle
+#     the includes.  Just ignore it for now - it'll still link fine.
+# -m32 - cross-compile for x86-32 because the muck isn't 64-bit clean yet.
+CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE} -Wno-implicit-function-declaration -m32
+
+LDFLAGS= -m32
 
 #
 # for saving old copies.
@@ -125,23 +134,23 @@ netmuck:        ${P} ${COBJ} interface.o ${LOBJ} mkversion.sh
 	sh mkversion.sh
 	${PRE} ${CC} ${CFLAGS} -c version.c
 	${MV} netmuck netmuck~
-	${PRE} ${CC} ${CFLAGS} -o netmuck ${COBJ} interface.o version.o \
+	${PRE} ${CC} ${LDFLAGS} -o netmuck ${COBJ} interface.o version.o \
 	 ${LIBR} ${LOBJ}
 
 resolver:	resolver.o ${LOBJ}
-	${PRE} ${CC} ${CFLAGS} -o resolver resolver.o ${LIBR} ${LOBJ}
+	${PRE} ${CC} ${LDFLAGS} -o resolver resolver.o ${LIBR} ${LOBJ}
 
 extract: ${P} extract.o ${EOBJ} ${LOBJ}
 	 ${RM} extract
-	 ${CC} ${CFLAGS} -o extract ${EOBJ} extract.o ${LOBJ}
+	 ${CC} ${LDFLAGS} -o extract ${EOBJ} extract.o ${LOBJ}
 
 topwords: topwords.o hashtab.o
 	${RM} topwords
-	${CC} ${CFLAGS} -o topwords topwords.o hashtab.o
+	${CC} ${LDFLAGS} -o topwords topwords.o hashtab.o
 
 olddecompress: olddecomp.o oldcompress.o ${LOBJ}
 	${RM} olddecompress
-	${CC} ${CFLAGS} -o olddecompress olddecomp.o oldcompress.o ${LOBJ}
+	${CC} ${LDFLAGS} -o olddecompress olddecomp.o oldcompress.o ${LOBJ}
 
 #############################################################
 # Funky stuff for debugging and coding work.

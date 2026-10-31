@@ -47,7 +47,8 @@
 #include "interface.h"
 #include "externs.h"
 
-#include <xcrypt.h>
+/* #include <xcrypt.h> */
+#include <crypt.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -168,7 +169,7 @@ check_password(dbref player, const char *password)
     if (!p) return FALSE;
 
     // Hash the password and compare hashes
-    if (strcmp(xcrypt(password, p), p) == 0) return TRUE;
+    if (strcmp(crypt(password, p), p) == 0) return TRUE;
 
     return FALSE;
 }
@@ -188,7 +189,7 @@ set_password(dbref player, const char *password)
     close(fd);
 
     // Make the hash 
-    newhash = xcrypt(password, xcrypt_gensalt("$2a$", 12, entropy, sizeof(entropy)));
+    newhash = crypt(password, crypt_gensalt("$2a$", 12, entropy, sizeof(entropy)));
 
     // Trash the old password
     if (DBFETCH(player)->sp.player.password)
