@@ -1147,6 +1147,29 @@ process_command(dbref player, char *command)
 				Matched("@sweep");
 				do_sweep(player, arg1);
 				break;
+                case 's':
+                case 'S':
+                    if (command[3] == 'l' || command[3] == 'L')
+                    {
+                        switch(command[4]) {
+                            case 's':
+                            case 'S':
+                                Matched("@sslstatus");
+                                do_sslstatus(player);
+                                break;
+
+                            case 'r':
+                            case 'R':
+                                Matched("@sslreload");
+                                do_sslreload(player);
+                                break;
+                            default:
+                                goto bad;
+                        }
+                        break;
+                    }
+                    goto bad;
+                break;
 			    default:
 				goto bad;
 			}

@@ -59,7 +59,7 @@ LIBR= -lm -lnsl -lssl -lcrypt -lcrypto
 #     implicit declaration an error.  It'll require a bit of work to untangle
 #     the includes.  Just ignore it for now - it'll still link fine.
 # -m32 - cross-compile for x86-32 because the muck isn't 64-bit clean yet.
-CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE} -Wno-implicit-function-declaration -m32
+CFLAGS= -Wall ${OPTIM} ${DEFS} -I${INCLUDE} -Wno-error=implicit-function-declaration -m32
 
 LDFLAGS= -m32
 

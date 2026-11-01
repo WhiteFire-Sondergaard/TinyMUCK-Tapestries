@@ -771,6 +771,8 @@ void do_mpi_topprofs(dbref player, char *arg1);
 void do_all_topprofs(dbref player, char *arg1);
 void do_memory(dbref who);
 /* interface.c */
+void do_sslstatus(dbref player);
+void do_sslreload(dbref player);
 void show_program_usage(char *prog);
 int main(int argc, char **argv);
 int notify_nolisten(dbref player, const char *msg, int isprivate);

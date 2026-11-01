@@ -2165,7 +2165,140 @@ close_sockets(const char *msg)
     }
 }
 
+// Check the SSL cert status
+void
+do_sslstatus(dbref player)
+{
+    static char description_buffer[1024];
+    X509 *cert = NULL;
+    BIO *bio_mem = NULL;
+    char expire_str[64] = "Unknown";
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int n = 0;
+    char sha256_hex[128] = "";
+    char issuer_buf[256] = "Unknown Issuer";
+    X509_NAME *issuer_name = NULL;
 
+    if (!Wizard(player)) {
+	    notify(player, "Access Denied.");
+	    return;
+    }
+
+    if (!ctx) {
+        notify(player, "SSL Status: Disabled or uninitialized.");
+        return;
+    }
+
+    // 1. Peek at the active certificate currently bound to the context
+    // (This uses internal OpenSSL pointers; do not free 'cert' at the end)
+    cert = SSL_CTX_get0_certificate(ctx);
+    if (!cert) {
+        notify(player, "SSL Status: Active context, but no certificate file is loaded.");
+        return;
+    }
+
+    // Issuer Name
+    issuer_name = X509_get_issuer_name(cert);
+    if (issuer_name) {
+        // This converts the raw OpenSSL structure into a readable one-line string:
+        // e.g., "/C=US/O=Let's Encrypt/CN=R10"
+        X509_NAME_oneline(issuer_name, issuer_buf, sizeof(issuer_buf));
+    }
+
+    // 2. Extract the 'Not After' expiration date safely via memory buffers
+    ASN1_TIME *not_after = X509_get_notAfter(cert);
+    if (not_after) {
+        bio_mem = BIO_new(BIO_s_mem());
+        if (ASN1_TIME_print(bio_mem, not_after) > 0) {
+            BIO_gets(bio_mem, expire_str, sizeof(expire_str));
+        }
+        BIO_free(bio_mem);
+    }
+
+    // 3. Calculate the live SHA-256 fingerprint of the certificate
+    if (X509_digest(cert, EVP_sha256(), md, &n)) {
+        char *ptr = sha256_hex;
+        for (unsigned int i = 0; i < n; i++) {
+            ptr += sprintf(ptr, "%02X%s", md[i], (i + 1 == n) ? "" : ":");
+        }
+    } else {
+        snprintf(sha256_hex, sizeof(sha256_hex), "Failed to calculate digest");
+    }
+
+    // 4. Print everything into your unified descriptive string
+    snprintf(description_buffer, sizeof(description_buffer),
+             "--- %s MUCK Live Encryption Profile ---\n"
+             "Status: TLS Certificate Active & Valid\n"
+             "Issued By: %s\n"
+             "Expires On: %s\n"
+             "SHA-256 Fingerprint:\n%s\n"
+             "----------------------------------------------",
+             tp_muckname, issuer_buf, expire_str, sha256_hex);
+
+    notify(player, description_buffer);
+}
+
+// Reload the SSL cert
+void
+do_sslreload(dbref player)
+{
+    if (!Wizard(player)) {
+	    notify(player, "Access Denied.");
+	    return;
+    }
+
+    if (!ctx) {
+        notify(player, "SSL Status: Disabled or uninitialized.");
+        return;
+    }
+
+    // 1. Create a clean, temporary context using your existing method
+    SSL_METHOD *method = (SSL_METHOD *)SSLv23_server_method();
+    SSL_CTX *new_ctx = SSL_CTX_new(method);
+
+    if (!new_ctx) {
+        notify(player, "Failed to create temporary SSL context.");
+        return;
+    }
+
+    // The tapestries cert is signed with SHA1.  Current openssl
+    // will no logner load it by default.  Set lower security level.
+    SSL_CTX_set_security_level(new_ctx, 0);
+
+    // 2. Read the new files into the temporary context
+    if (SSL_CTX_use_certificate_chain_file(new_ctx, SSL_KEY_FILE) <= 0 ||
+        SSL_CTX_use_PrivateKey_file(new_ctx, SSL_KEY_FILE, SSL_FILETYPE_PEM) <= 0) {
+        notify(player, "New keys are invalid. Aborting.");
+        SSL_CTX_free(new_ctx); // Safe cleanup
+        return;
+    }
+
+    // 3. Verify private key matches the public cert chain
+    if (!SSL_CTX_check_private_key(new_ctx)) {
+        notify(player, "Private key does not match certificate chain. Aborting.");
+        SSL_CTX_free(new_ctx);
+        return;
+    }
+
+    // 4. Set up verification paths
+    SSL_CTX_load_verify_locations(new_ctx, NULL, SSL_CA_DIR);
+
+    // 5. ATOMIC SWAP: Point your global listen loop variable to the new context
+    // Assuming 'global_ssl_ctx' is what your connection listener uses for SSL_new()
+    SSL_CTX *old_ctx = ctx;
+    ctx = new_ctx;
+
+    // 6. Free the old context memory safely
+    // OpenSSL internal reference counting ensures it won't actually be wiped from memory
+    // until the last active legacy player session disconnects naturally.
+    SSL_CTX_free(old_ctx);
+
+    notify(player, "Certificates reloaded successfully.");
+
+    do_sslstatus(player); // describe newly loaded certificate
+}
+
+// !!! Shutdown and do not save DB. The OMFG button.
 void
 do_armageddon(dbref player, const char *msg)
 {
