@@ -1,5 +1,6 @@
 *.o
 src/orig
+src/version.c
 *~
 cscope.out
 netmuck
